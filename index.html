@@ -216,7 +216,7 @@ function timeChart(host,series,opt){
   const all=series.flatMap(s=>s.pts);if(!all.length){host.innerHTML='<p class="note">Not enough rounds yet.</p>';return}
   const t0=Math.min(...all.map(p=>p.t)),t1=Math.max(...all.map(p=>p.t));
   let v0=Math.min(...all.map(p=>p.v)),v1=Math.max(...all.map(p=>p.v));const pad=(v1-v0)*.08||1;v0-=pad;v1+=pad;
-  const ticks=niceTicks(v0,v1,4);v0=Math.min(v0,ticks[0]);v1=Math.max(v1,ticks[ticks.length-1]);
+  const ticks=niceTicks(v0,v1,4).filter(v=>v>=v0&&v<=v1);
   const X=t=>L+(t1===t0?.5:(t-t0)/(t1-t0))*(W-L-R),Y=v=>T+(1-(v-v0)/(v1-v0))*(H-T-B);
   let g='';ticks.forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`});
   // x ticks: years

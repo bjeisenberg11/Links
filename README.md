@@ -9,4 +9,4 @@ Live at https://bjeisenberg11.github.io/Links/
 
 ## Claude insights
 
-`insights.json` holds the "Claude's take" card on Overview. Ask Claude to "refresh Links insights" to rewrite it from your latest rounds.
+`insights.json` holds the "Claude's take" card on Overview. A scheduled Claude task rewrites it every Sunday evening when new rounds have been posted.

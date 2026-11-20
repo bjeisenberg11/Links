@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Links</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Links">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1411" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: phone-first single column; scorecard numerals (condensed) for every figure, quiet sans for words. */
+:root{
+  --bg:#f2f4ef; --surface:#ffffff; --ink:#16221b; --muted:#5c6a61; --faint:#8d9a91; --line:#dde3da;
+  --accent:#1f5b3c; --accent-ink:#ffffff; --soft:#e2ede5; --flag:#b8771d; --flag-soft:#f6ead6; --bad:#a83a2c;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1411; --surface:#16201a; --ink:#e5ebe6; --muted:#98a69d; --faint:#6d7b72; --line:#27322b;
+  --accent:#5eb083; --accent-ink:#0b1a12; --soft:#1b3226; --flag:#e0a650; --flag-soft:#3a2d18; --bad:#e07a6a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1411; --surface:#16201a; --ink:#e5ebe6; --muted:#98a69d; --faint:#6d7b72; --line:#27322b;
+  --accent:#5eb083; --accent-ink:#0b1a12; --soft:#1b3226; --flag:#e0a650; --flag-soft:#3a2d18; --bad:#e07a6a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));font-size:15px;-webkit-text-size-adjust:100%}
+html{color-scheme:light}@media (prefers-color-scheme: dark){html{color-scheme:dark}}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
+.btn{font:600 14px var(--body);border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--bad);color:var(--surface)}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;background:var(--line);border-radius:10px;padding:3px;gap:3px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px var(--body);padding:8px 4px;border-radius:8px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+.card{background:var(--surface);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{margin:0;font:600 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .sub{font-size:13px;color:var(--muted);margin:0}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.hi-dial{width:116px;height:116px;border-radius:50%;border:7px solid var(--accent);display:grid;place-items:center;text-align:center}
+.hi-dial b{font:700 46px/1 var(--display);display:block}
+.hi-dial span{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.kv div{display:flex;flex-direction:column;min-width:0}
+.kv small{font-size:12px;color:var(--muted)}
+.kv strong{font:600 22px/1.1 var(--display)}
+.pill{display:inline-flex;align-items:center;gap:4px;font:600 12px var(--body);padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--accent);width:fit-content}
+.pill.up{background:var(--flag-soft);color:var(--flag)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{border:1.5px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.tile b{font:700 26px/1 var(--display);display:block}
+.tile small{font-size:12px;color:var(--muted)}
+.seg{display:flex;gap:4px}
+.seg button{border:1px solid var(--line);background:transparent;color:var(--muted);font:600 12px var(--body);padding:4px 10px;border-radius:99px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.chart{position:relative;width:100%;touch-action:pan-y}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font-family:var(--body);font-size:11px;fill:var(--faint)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;line-height:1.35;padding:6px 8px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);z-index:2}
+.tip[hidden]{display:none}
+/* score record: scorecard grid with circled counting scores */
+.record{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cell{border:1px solid var(--line);border-radius:8px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.cell .d{font:600 18px/1 var(--display);width:40px;height:30px;display:grid;place-items:center;border-radius:50%}
+.cell.count .d{border:2px solid var(--accent);color:var(--accent)}
+.cell.old{background:var(--flag-soft)}
+.cell small{font-size:10px;color:var(--faint)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-2px;margin-right:4px}
+.callouts{display:grid;gap:8px}
+.callout{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.callout b{font-family:var(--display);font-size:18px}
+.list{display:flex;flex-direction:column}
+.li{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.li:first-child{border-top:0}
+.li .t{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.li .m{font-size:12px;color:var(--muted)}
+.li .r{text-align:right;font:600 20px/1 var(--display)}
+.li .r small{display:block;font:400 11px var(--body);color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--accent);margin-top:4px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.n,.tbl th.n{text-align:right;font-family:var(--display);font-size:16px;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.picker{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.picker button{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:9px 12px;color:var(--ink);font:14px var(--body);cursor:pointer}
+.picker button:first-child{border-top:0}
+.picker button small{color:var(--muted)}
+.picker button[aria-selected="true"]{background:var(--soft)}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,16,12,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font:700 22px var(--display)}
+.preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
+.preview b{font:700 20px var(--display);display:block}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.empty{text-align:center;color:var(--muted);padding:40px 12px}
+.note{font-size:12px;color:var(--faint)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:99px;font-size:14px;z-index:30}
+.yearhead{font:700 18px var(--display);padding:14px 0 4px;color:var(--muted)}
+.rowbtn{all:unset;display:contents;cursor:pointer}
+.expand{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+@media (max-width:380px){.hero{grid-template-columns:1fr;justify-items:start}.record{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Links</h1><button class="btn" id="postBtn" type="button">+ Post round</button></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-overview" aria-selected="true" data-tab="overview">Overview</button>
+      <button role="tab" id="tab-rounds" aria-selected="false" data-tab="rounds">Rounds</button>
+      <button role="tab" id="tab-courses" aria-selected="false" data-tab="courses">Courses</button>
+    </div>
+  </header>
+  <main id="main"><div class="card empty" id="loading">Loading your rounds…</div></main>
+</div>
+<div id="sheetHost"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ---------- WHS engine ---------- */
+function r1(x){return Math.round(x*10+1e-9)/10}
+function expected9(hi){return hi*0.52+1.2}
+function fewTable(d){const n=d.length;if(n<3)return null;const a=k=>d.slice(0,k).reduce((s,x)=>s+x,0)/k;
+  if(n===3)return{v:d[0]-2,k:1};if(n===4)return{v:d[0]-1,k:1};if(n===5)return{v:d[0],k:1};if(n===6)return{v:a(2)-1,k:2};
+  if(n<=8)return{v:a(2),k:2};if(n<=11)return{v:a(3),k:3};if(n<=14)return{v:a(4),k:4};if(n<=16)return{v:a(5),k:5};
+  if(n<=18)return{v:a(6),k:6};if(n===19)return{v:a(7),k:7};return{v:a(8),k:8}}
+function sortRounds(rs){return rs.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:((a.seq||1)-(b.seq||1))||((a.createdAt||0)-(b.createdAt||0)))}
+function computeAll(rounds){
+  const rs=sortRounds(rounds),out=[],hist=[];let hi=null;
+  for(const r of rs){
+    const nine=r.holes!=='18',raw=(113/r.slope)*(r.score-r.rating);
+    const diff=nine?(hi==null?null:r1(r1(raw)+expected9(hi))):r1(raw);
+    const rec={...r,raw:r1(raw),diff,adj:0,hiBefore:hi};out.push(rec);
+    if(diff==null){rec.hiAfter=hi;continue}
+    if(hi!=null){const g=hi-diff,e=g>=10?2:g>=7?1:0;if(e){rec.esr=e;out.filter(o=>o.diff!=null).slice(-20).forEach(o=>o.adj-=e)}}
+    const pool=out.filter(o=>o.diff!=null).slice(-20);
+    const t=fewTable(pool.map(o=>o.diff+o.adj).sort((a,b)=>a-b));
+    if(t){let v=t.v;
+      if(pool.length>=20){const cut=new Date(Date.parse(r.date)-365*864e5).toISOString().slice(0,10);
+        const lows=hist.filter(h=>h.date>=cut&&h.date<r.date&&h.n>=20).map(h=>h.hi);
+        if(lows.length){const low=Math.min(...lows);let inc=v-low;if(inc>3){inc=Math.min(3+(inc-3)/2,5);v=low+inc;rec.capped=true}}}
+      hi=Math.min(r1(v),54)}
+    rec.hiAfter=hi;hist.push({date:r.date,hi,n:pool.length});
+  }
+  return out;
+}
+function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
+  const ds=pool.map(o=>({o,d:o.diff+o.adj})).sort((a,b)=>a.d-b.d);const t=fewTable(ds.map(x=>x.d));const k=t?t.k:0;
+  return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
+
+/* ---------- state ---------- */
+const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtD=d=>{const [y,m,dd]=d.split('-');return `${+m}/${+dd}/${y.slice(2)}`};
+const fmtLong=d=>new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+const todayStr=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const holesLabel=h=>h==='18'?'18':h==='F9'?'Front 9':'Back 9';
+const fx=(v,d=1)=>v==null||isNaN(v)?'—':v.toFixed(d);
+const hiStr=v=>v==null?'—':(v<0?'+'+(-v).toFixed(1):v.toFixed(1));
+const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200)}
+const courseKey=(c,t,h)=>`${c}|${t}|${h==='18'?'18':'9'}`.toLowerCase();
+
+/* ---------- derived ---------- */
+function derive(){
+  S.calc=computeAll(S.rounds);
+  // play stats per course (by name)
+}
+function roundsCount(list){return list.reduce((s,r)=>s+(r.holes==='18'?1:.5),0)}
+
+/* ---------- charts ---------- */
+function attachTip(el,points,fmt,opts={}){ // points: [{x,y,...}] in px
+  const tip=el.querySelector('.tip'),cross=el.querySelector('.cross'),dot=el.querySelector('.hov');
+  function show(px){if(!points.length)return;let best=points[0],bd=1e9;
+    for(const p of points){const d=Math.abs(p.x-px)+(opts.useY?0:0);if(d<bd){bd=d;best=p}}
+    tip.hidden=false;tip.innerHTML=fmt(best);
+    const w=el.clientWidth;tip.style.left=Math.min(Math.max(best.x,70),w-70)+'px';tip.style.top=(best.y-10)+'px';
+    if(cross){cross.setAttribute('x1',best.x);cross.setAttribute('x2',best.x);cross.style.display=''}
+    if(dot){dot.setAttribute('cx',best.x);dot.setAttribute('cy',best.y);dot.style.display=''}}
+  function hide(){tip.hidden=true;if(cross)cross.style.display='none';if(dot)dot.style.display='none'}
+  const svg=el.querySelector('svg');
+  svg.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();show(e.clientX-r.left)});
+  svg.addEventListener('pointerdown',e=>{const r=svg.getBoundingClientRect();show(e.clientX-r.left)});
+  svg.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')hide()});
+}
+function niceTicks(min,max,count=4){const span=max-min||1;const step0=span/count;const mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=step0)||mag*10;const out=[];for(let v=Math.ceil(min/step)*step;v<=max+1e-9;v+=step)out.push(+v.toFixed(6));return out}
+function timeChart(host,series,opt){
+  // series: [{pts:[{t,v,...}], kind:'line'|'dots', cls}]
+  const W=Math.max(280,host.clientWidth),H=opt.h||200,L=30,R=8,T=12,B=24;
+  const all=series.flatMap(s=>s.pts);if(!all.length){host.innerHTML='<p class="note">Not enough rounds yet.</p>';return}
+  const t0=Math.min(...all.map(p=>p.t)),t1=Math.max(...all.map(p=>p.t));
+  let v0=Math.min(...all.map(p=>p.v)),v1=Math.max(...all.map(p=>p.v));const pad=(v1-v0)*.08||1;v0-=pad;v1+=pad;
+  const ticks=niceTicks(v0,v1,4);v0=Math.min(v0,ticks[0]);v1=Math.max(v1,ticks[ticks.length-1]);
+  const X=t=>L+(t1===t0?.5:(t-t0)/(t1-t0))*(W-L-R),Y=v=>T+(1-(v-v0)/(v1-v0))*(H-T-B);
+  let g='';ticks.forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`});
+  // x ticks: years
+  const y0=new Date(t0).getFullYear(),y1=new Date(t1).getFullYear();const yrs=[];for(let y=y0+1;y<=y1;y++)yrs.push(y);
+  const every=Math.ceil(yrs.length/(W<420?4:7))||1;
+  yrs.forEach((y,i)=>{const t=Date.UTC(y,0,1);if(t<t0||t>t1)return;const x=X(t);g+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${H-B}" stroke="var(--line)" stroke-dasharray="2 3"/>`;if(i%every===0)g+=`<text x="${x}" y="${H-6}" text-anchor="middle">${y}</text>`});
+  if(!yrs.length||t1-t0<200*864e5){[t0,t1].forEach((t,i)=>g+=`<text x="${X(t)}" y="${H-6}" text-anchor="${i?'end':'start'}">${fmtD(new Date(t).toISOString().slice(0,10))}</text>`)}
+  let marks='';
+  for(const s of series){
+    if(s.kind==='line'){const d=s.pts.map((p,i)=>`${i?'L':'M'}${X(p.t).toFixed(1)},${Y(p.v).toFixed(1)}`).join('');
+      if(s.area)marks+=`<path d="${d}L${X(s.pts[s.pts.length-1].t)},${H-B}L${X(s.pts[0].t)},${H-B}Z" fill="var(--soft)" opacity=".8"/>`;
+      marks+=`<path d="${d}" fill="none" stroke="${s.color||'var(--accent)'}" stroke-width="${s.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`}
+    else marks+=s.pts.map(p=>`<circle cx="${X(p.t)}" cy="${Y(p.v)}" r="${p.rad||3}" fill="${p.fill||s.color}" stroke="var(--surface)" stroke-width="1"/>`).join('')}
+  let extra='';(opt.markers||[]).forEach(m=>{extra+=`<circle cx="${X(m.t)}" cy="${Y(m.v)}" r="5" fill="var(--flag)" stroke="var(--surface)" stroke-width="2"/>`});
+  const end=opt.endpoint;if(end)extra+=`<circle cx="${X(end.t)}" cy="${Y(end.v)}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(opt.label)}">${g}${marks}${extra}
+   <line class="cross" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-width="1" style="display:none"/>
+   <circle class="hov" r="5" fill="none" stroke="var(--ink)" stroke-width="2" style="display:none"/></svg><div class="tip" hidden></div>`;
+  const tp=(opt.tipSeries?opt.tipSeries:series[0]).pts.map(p=>({...p,x:X(p.t),y:Y(p.v)}));
+  attachTip(host,tp,opt.fmt);
+}
+function barChart(host,items,opt){ // items [{label,v,tip}]
+  const W=Math.max(280,host.clientWidth),H=opt.h||170,L=26,R=6,T=16,B=22;
+  const vmax=Math.max(...items.map(i=>i.v),1);const ticks=niceTicks(0,vmax,3);const top=ticks[ticks.length-1];
+  const bw=(W-L-R)/items.length,Y=v=>T+(1-v/top)*(H-T-B);
+  let g='';ticks.forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+4}" text-anchor="end">${v}</text>`);
+  const every=Math.ceil(items.length/(W<420?8:14));
+  items.forEach((it,i)=>{const x=L+i*bw+bw*.18,w=Math.max(2,bw*.64),y=Y(it.v),h=H-B-y;
+    if(it.v>0)g+=`<path d="M${x},${H-B}V${y+Math.min(4,h)}Q${x},${y} ${x+Math.min(4,w/2)},${y}H${x+w-Math.min(4,w/2)}Q${x+w},${y} ${x+w},${y+Math.min(4,h)}V${H-B}Z" fill="${it.color||'var(--accent)'}"/>`;
+    if(i%every===0||items.length<=12)g+=`<text x="${x+w/2}" y="${H-6}" text-anchor="middle">${esc(it.label)}</text>`;
+    if(opt.valueLabels&&it.v>0)g+=`<text x="${x+w/2}" y="${y-4}" text-anchor="middle" style="fill:var(--muted);font-size:10px">${it.vl??it.v}</text>`});
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${esc(opt.label)}">${g}<line class="cross" y1="${T}" y2="${H-B}" stroke="var(--muted)" style="display:none"/></svg><div class="tip" hidden></div>`;
+  attachTip(host,items.map((it,i)=>({...it,x:L+i*bw+bw/2,y:Y(it.v)})),opt.fmt);
+}
+
+/* ---------- views ---------- */
+function overview(){
+  const C=S.calc;if(!C.length)return `<div class="card empty">No rounds yet. Tap <b>+ Post round</b> to add your first one.</div>`;
+  const last=[...C].reverse().find(x=>x.hiAfter!=null);const hi=last?last.hiAfter:null;
+  const withHi=C.filter(x=>x.hiAfter!=null);
+  const yr=daysAgo(365);const lastYear=withHi.filter(x=>x.date>=yr);
+  const low12=lastYear.length?Math.min(...lastYear.map(x=>x.hiAfter)):null;
+  const before=withHi.filter(x=>x.date<yr);const ago=before.length?before[before.length-1].hiAfter:null;
+  const best=withHi.reduce((b,x)=>(!b||x.hiAfter<=b.hiAfter)?x:b,null);
+  const chg=ago!=null&&hi!=null?r1(hi-ago):null;
+  const ytdStart=todayStr().slice(0,4)+'-01-01';
+  const rec=currentRecord(C);
+  const ytd=roundsCount(C.filter(x=>x.date>=ytdStart)),m12=roundsCount(C.filter(x=>x.date>=yr)),all=roundsCount(C);
+  return `
+  <section class="card" aria-label="Handicap index">
+    <div class="hero">
+      <div class="hi-dial"><div><b class="num">${hiStr(hi)}</b><span>Index</span></div></div>
+      <div class="kv">
+        <div><small>Low index, last 12 mo</small><strong class="num">${hiStr(low12)}</strong></div>
+        <div><small>12 months ago</small><strong class="num">${hiStr(ago)}</strong></div>
+        <div><small>Best ever</small><strong class="num">${hiStr(best&&best.hiAfter)}</strong><small>${best?fmtLong(best.date):''}</small></div>
+        <div><small>Change, 12 mo</small>${chg==null?'<strong>—</strong>':`<span class="pill ${chg>0?'up':''}">${chg>0?'▲ +':chg<0?'▼ ':''}${Math.abs(chg).toFixed(1)}${chg<0?' better':chg>0?' higher':''}</span>`}</div>
+      </div>
+    </div>
+  </section>
+  <section class="card"><h2>Rounds posted</h2>
+    <div class="tiles"><div class="tile"><b class="num">${fx(ytd)}</b><small>YTD</small></div><div class="tile"><b class="num">${fx(m12)}</b><small>Last 12 mo</small></div><div class="tile"><b class="num">${fx(all)}</b><small>All rounds</small></div></div>
+    <p class="note">9-hole rounds count as half.</p>
+  </section>
+  <section class="card"><div class="row-head"><h2>Handicap history</h2>${seg('range')}</div>
+    <p class="sub">Best ${hiStr(best&&best.hiAfter)} on ${best?fmtD(best.date):'—'} · flag marks your low point</p>
+    <div class="chart" id="hiChart"></div></section>
+  ${recordCard(rec,hi)}
+  <section class="card"><div class="row-head"><h2>Score differentials</h2>${seg('diffRange')}</div>
+    <p class="sub">Each dot is a round. The line is your rolling 20-round average.</p>
+    <div class="chart" id="diffChart"></div>
+    <div class="legend"><span><i style="background:var(--accent);opacity:.45"></i>Round</span><span><i style="background:var(--ink);border-radius:2px;height:3px;vertical-align:3px"></i>20-round average</span></div></section>
+  <section class="card"><h2>Rounds by year</h2><p class="sub">Tap a bar for that year's average score and differential.</p><div class="chart" id="yearChart"></div><div id="yearTable" class="scroll"></div></section>
+  <section class="card"><h2>By month of the season</h2><p class="sub">Average differential by calendar month, all years. Lower is better.</p><div class="chart" id="monthChart"></div></section>
+  <section class="card"><h2>Score distribution</h2><p class="sub">18-hole gross scores, last 12 months vs. all time.</p><div class="chart" id="distChart"></div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Last 12 mo</span><span><i style="background:var(--faint)"></i>Earlier</span></div></section>
+  ${mostPlayed()}
+  ${bestScores()}`;
+}
+function seg(key){const v=S[key];return `<div class="seg" data-seg="${key}">${['1y','3y','all'].map(o=>`<button type="button" aria-pressed="${v===o}" data-v="${o}">${o==='all'?'All':o.toUpperCase()}</button>`).join('')}</div>`}
+function recordCard(rec,hi){
+  if(!rec.pool.length)return'';
+  const cells=rec.pool.slice().reverse().map((o,i)=>`<div class="cell ${rec.counting.has(o.id)?'count':''} ${i===rec.pool.length-1&&rec.pool.length===20?'old':''}" title="${esc(o.course)}"><span class="d num">${fx(o.diff+o.adj)}</span><small>${fmtD(o.date)}</small></div>`).join('');
+  const oldest=rec.pool.length===20?rec.pool[0]:null;
+  const home=topTee();let need='';
+  if(rec.threshold!=null&&home){const sc=Math.floor(rec.threshold*home.slope/113+home.rating);need=`<div class="callout">To make your best ${rec.k}, post a differential of <b>${fx(rec.threshold)}</b> or lower. At ${esc(home.course)} (${esc(home.tee)}) that's <b>${sc}</b> or better.</div>`}
+  return `<section class="card"><h2>Scoring record · last ${rec.pool.length}</h2>
+   <p class="sub">Newest first. Circled scores are the ${rec.k} that make up your index.</p>
+   <div class="record">${cells}</div>
+   <div class="legend"><span><i style="border:2px solid var(--accent)"></i>Counting</span>${oldest?'<span><i style="background:var(--flag-soft);border-radius:3px"></i>Drops off next</span>':''}</div>
+   <div class="callouts">${need}${oldest?`<div class="callout">Next round pushes out <b>${fx(oldest.diff+oldest.adj)}</b> from ${fmtD(oldest.date)}${rec.counting.has(oldest.id)?', one of your counting scores':''}.</div>`:''}</div></section>`;
+}
+function courseStats(){const m=new Map();for(const r of S.calc){const k=r.course;if(!m.has(k))m.set(k,{course:k,rounds:[],tees:new Map()});const e=m.get(k);e.rounds.push(r);const tk=r.tee+'|'+r.holes;e.tees.set(tk,(e.tees.get(tk)||0)+1)}return[...m.values()]}
+function topTee(){const m=new Map();for(const r of S.calc.slice(-60)){if(r.holes!=='18')continue;const k=r.course+'|'+r.tee;m.set(k,(m.get(k)||{n:0,r}));m.get(k).n++}let b=null;for(const v of m.values())if(!b||v.n>b.n)b=v;return b?b.r:null}
+function mostPlayed(){const cs=courseStats().filter(c=>c.rounds.some(r=>r.holes==='18')).sort((a,b)=>b.rounds.length-a.rounds.length).slice(0,8);if(!cs.length)return'';
+  const max=cs[0].rounds.length;
+  return `<section class="card"><div class="row-head"><h2>Most played courses</h2><span class="note">${courseStats().length} courses total</span></div>
+  <div class="list">${cs.map(c=>{const r18=c.rounds.filter(r=>r.holes==='18');const sc=r18.map(r=>r.score);
+   return `<div class="li"><div class="t">${esc(c.course)}<div class="m">Avg ${fx(avg(sc))} · best ${Math.min(...sc)} · avg diff ${fx(avg(r18.map(r=>r.diff)))}</div><div class="bar" style="width:${c.rounds.length/max*100}%"></div></div><div class="r num">${c.rounds.length}<small>rounds</small></div></div>`}).join('')}</div></section>`}
+function bestScores(){const b=S.calc.filter(r=>r.diff!=null).slice().sort((a,b)=>a.diff-b.diff).slice(0,20);if(!b.length)return'';
+  return `<section class="card"><h2>Best 20 differentials</h2><div class="scroll"><table class="tbl"><thead><tr><th>Date</th><th>Course</th><th class="n">Score</th><th class="n">Diff</th></tr></thead><tbody>
+  ${b.map(r=>`<tr><td>${fmtD(r.date)}</td><td>${esc(r.course)}<div class="note">${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''}</div></td><td class="n">${r.score}</td><td class="n">${fx(r.diff)}</td></tr>`).join('')}</tbody></table></div></section>`}
+
+function roundsView(){
+  const rec=currentRecord(S.calc);const q=S.q.trim().toLowerCase();
+  const rows=S.calc.slice().reverse().filter(r=>!q||r.course.toLowerCase().includes(q)||r.date.includes(q));
+  let html=`<section class="card"><label for="rq">Search rounds<input id="rq" type="search" placeholder="Course name or year" value="${esc(S.q)}"></label><p class="note">${rows.length} rounds. Tap a round to edit or delete it.</p></section><section class="card"><div class="list" id="roundList">`;
+  let yr='';
+  for(const r of rows){const y=r.date.slice(0,4);if(y!==yr){yr=y;html+=`<div class="yearhead">${y}</div>`}
+    const open=S.expanded===r.id;
+    html+=`<div class="li" data-rid="${r.id}" role="button" tabindex="0" aria-expanded="${open}"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}${rec.counting.has(r.id)?' · <span class="pill">Counting</span>':''}</div></div>
+     <div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div>
+     ${open?`<div class="expand"><span class="note">Index after: ${hiStr(r.hiAfter)}</span><span style="flex:1"></span><button class="btn ghost" type="button" data-edit="${r.id}">Edit</button><button class="btn danger" type="button" data-del="${r.id}">Delete</button></div>`:''}</div>`}
+  return html+`</div></section>`;
+}
+function coursesView(){
+  const play=new Map();S.calc.forEach(r=>{const k=courseKey(r.course,r.tee,r.holes);if(!play.has(k))play.set(k,[]);play.get(k).push(r)});
+  const q=S.cq.trim().toLowerCase();
+  const cs=S.courses.slice().filter(c=>!q||c.course.toLowerCase().includes(q)).sort((a,b)=>(play.get(courseKey(b.course,b.tee,b.holes))||[]).length-(play.get(courseKey(a.course,a.tee,a.holes))||[]).length||a.course.localeCompare(b.course));
+  return `<section class="card"><div class="row-head"><label for="cq" style="flex:1">Search courses<input id="cq" type="search" placeholder="Course name" value="${esc(S.cq)}"></label></div>
+  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. These fill in rating and slope when you post.</p></section>
+  <section class="card"><div class="list">${cs.map(c=>{const ps=play.get(courseKey(c.course,c.tee,c.holes))||[];
+   return `<div class="li"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
+   <div class="r num" style="display:flex;gap:8px;align-items:center">${ps.length}<small style="display:inline">played</small><button class="btn ghost" type="button" data-cedit="${c.id}" style="padding:6px 10px">Edit</button></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
+}
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  if(!S.ready.r){return}
+  const main=$('#main');
+  const focusId=document.activeElement&&document.activeElement.id,sel=document.activeElement&&document.activeElement.selectionStart;
+  main.innerHTML=S.tab==='overview'?overview():S.tab==='rounds'?roundsView():coursesView();
+  if(S.tab==='overview')drawCharts();
+  if(focusId&&document.getElementById(focusId)&&/^(rq|cq)$/.test(focusId)){const el=document.getElementById(focusId);el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}
+}
+function rangeStart(k){return k==='1y'?daysAgo(365):k==='3y'?daysAgo(365*3):'0000'}
+function drawCharts(){
+  const C=S.calc,T=d=>Date.parse(d+'T12:00:00Z');
+  const hiPts=C.filter(x=>x.hiAfter!=null&&x.date>=rangeStart(S.range)).map(x=>({t:T(x.date),v:x.hiAfter,r:x}));
+  const el=$('#hiChart');
+  if(el){const lowP=hiPts.reduce((b,p)=>!b||p.v<=b.v?p:b,null);
+    timeChart(el,[{pts:hiPts,kind:'line',area:true}],{h:210,label:'Handicap index over time',markers:lowP?[lowP]:[],endpoint:hiPts[hiPts.length-1],
+      fmt:p=>`<b>${hiStr(p.v)}</b> after ${fmtD(p.r.date)}<br>${esc(p.r.course.slice(0,32))} · ${p.r.score}`})}
+  const d=C.filter(x=>x.diff!=null);const roll=d.map((x,i)=>({t:T(x.date),v:avg(d.slice(Math.max(0,i-19),i+1).map(o=>o.diff)),r:x}));
+  const rs=rangeStart(S.diffRange);
+  const dp=d.filter(x=>x.date>=rs).map(x=>({t:T(x.date),v:x.diff,r:x,r_:3}));
+  const el2=$('#diffChart');if(el2)timeChart(el2,[{pts:dp.map(p=>({...p,rad:3.2,fill:'color-mix(in srgb, var(--accent) 45%, transparent)'})),kind:'dots',color:'var(--accent)'},{pts:roll.filter(p=>p.r.date>=rs),kind:'line',color:'var(--ink)',w:2}],
+    {h:210,label:'Score differentials',tipSeries:{pts:dp},fmt:p=>`<b>${fx(p.v)}</b> · ${p.r.score} at ${esc(p.r.course.slice(0,28))}<br>${fmtD(p.r.date)} · ${esc(p.r.tee)}`});
+  // years
+  const ys=new Map();C.forEach(r=>{const y=r.date.slice(0,4);if(!ys.has(y))ys.set(y,[]);ys.get(y).push(r)});
+  const y0=Math.min(...[...ys.keys()].map(Number)),y1=Math.max(...[...ys.keys()].map(Number));const yi=[];
+  for(let y=y0;y<=y1;y++){const rr=ys.get(String(y))||[];const r18=rr.filter(r=>r.holes==='18');yi.push({label:"'"+String(y).slice(2),y,v:roundsCount(rr),avg:avg(r18.map(r=>r.score)),ad:avg(rr.filter(r=>r.diff!=null).map(r=>r.diff)),low:r18.length?Math.min(...r18.map(r=>r.score)):null,vl:roundsCount(rr)})}
+  const el3=$('#yearChart');if(el3)barChart(el3,yi,{h:170,label:'Rounds by year',valueLabels:true,fmt:p=>`<b>${p.y}</b> · ${p.v} rounds<br>Avg ${fx(p.avg)} · diff ${fx(p.ad)}`});
+  const yt=$('#yearTable');if(yt)yt.innerHTML=`<table class="tbl"><thead><tr><th>Year</th><th class="n">Rounds</th><th class="n">Avg</th><th class="n">Best</th><th class="n">Avg diff</th><th class="n">Year-end</th></tr></thead><tbody>${yi.slice().reverse().filter(y=>y.v).map(y=>{const ye=[...C].reverse().find(r=>r.date.slice(0,4)<=String(y.y)&&r.hiAfter!=null);return`<tr><td>${y.y}</td><td class="n">${y.v}</td><td class="n">${fx(y.avg)}</td><td class="n">${y.low??'—'}</td><td class="n">${fx(y.ad)}</td><td class="n">${hiStr(ye&&ye.hiAfter)}</td></tr>`}).join('')}</tbody></table>`;
+  // months
+  const ms=Array.from({length:12},()=>[]);d.forEach(r=>ms[+r.date.slice(5,7)-1].push(r.diff));
+  const mn=['J','F','M','A','M','J','J','A','S','O','N','D'],mf=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const overall=avg(d.map(r=>r.diff));
+  const mi=ms.map((a,i)=>({label:mn[i],v:a.length?avg(a):0,n:a.length,m:mf[i],vl:a.length?fx(avg(a)):'',color:a.length&&avg(a)<=overall?'var(--accent)':'var(--faint)'}));
+  const el4=$('#monthChart');if(el4)barChart(el4,mi,{h:170,label:'Average differential by month',valueLabels:true,fmt:p=>p.n?`<b>${p.m}</b> · avg diff ${fx(p.v)}<br>${p.n} rounds`:`<b>${p.m}</b> · no rounds`});
+  // distribution
+  const r18=C.filter(r=>r.holes==='18');const lo=Math.min(...r18.map(r=>r.score)),hi=Math.max(...r18.map(r=>r.score));const yr=daysAgo(365);
+  const bins=[];for(let s=lo;s<=hi;s++){const recent=r18.filter(r=>r.score===s&&r.date>=yr).length,older=r18.filter(r=>r.score===s&&r.date<yr).length;bins.push({label:String(s),s,recent,older,v:recent+older})}
+  const el5=$('#distChart');if(el5){barChart(el5,bins.map(b=>({...b,color:'var(--faint)'})),{h:170,label:'Score distribution',fmt:p=>`<b>${p.s}</b> · ${p.v} rounds<br>${p.recent} in last 12 mo`});
+    // overlay recent portion
+    const svg=el5.querySelector('svg');const W=+svg.getAttribute('viewBox').split(' ')[2],H=170,L=26,R=6,T=16,B=22;const vmax=Math.max(...bins.map(b=>b.v),1);const tk=niceTicks(0,vmax,3);const top=tk[tk.length-1];const bw=(W-L-R)/bins.length;
+    let o='';bins.forEach((b,i)=>{if(!b.recent)return;const x=L+i*bw+bw*.18,w=Math.max(2,bw*.64),h=b.recent/top*(H-T-B);o+=`<rect x="${x}" y="${H-B-h}" width="${w}" height="${h}" fill="var(--accent)"/>`});
+    svg.insertAdjacentHTML('beforeend',o);svg.appendChild(svg.querySelector('.cross'))}
+}
+
+/* ---------- post / edit sheet ---------- */
+function openSheet(edit){
+  const r=edit?S.rounds.find(x=>x.id===edit):null;
+  const st={course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:'18',rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
+  const host=$('#sheetHost');
+  host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="pform" novalidate>
+   <h3>${r?'Edit round':'Post a round'}</h3>
+   <div class="grid2"><label for="f-date">Date<input id="f-date" type="date" value="${st.date}" required></label>
+    <label for="f-holes">Holes<select id="f-holes"><option value="18">18 holes</option><option value="F9">Front 9</option><option value="B9">Back 9</option></select></label></div>
+   <label for="f-search">Course<input id="f-search" type="search" placeholder="Search your saved courses" autocomplete="off" value="${esc(st.course)}"></label>
+   <div class="picker" id="picker" role="listbox" aria-label="Saved courses"></div>
+   <div class="grid3"><label for="f-tee">Tee<input id="f-tee" value="${esc(st.tee)}" placeholder="Blue"></label>
+    <label for="f-rating">Rating<input id="f-rating" type="number" inputmode="decimal" step="0.1" value="${st.rating}"></label>
+    <label for="f-slope">Slope<input id="f-slope" type="number" inputmode="numeric" value="${st.slope}"></label></div>
+   <label for="f-score">Adjusted gross score<input id="f-score" type="number" inputmode="numeric" value="${st.score}" placeholder="e.g. 86"></label>
+   <p class="note">Use net double bogey as your max on any hole, same as GHIN. A new course and tee is saved automatically.</p>
+   <div class="preview" id="pv"></div>
+   <p class="note" id="ferr" style="color:var(--bad)" hidden></p>
+   <div class="actions"><button class="btn ghost" type="button" id="fcancel">Cancel</button><button class="btn" type="submit" id="fsave">${r?'Save changes':'Post round'}</button></div>
+  </form></div>`;
+  $('#f-holes').value=st.holes;
+  const pick=()=>{const q=$('#f-search').value.trim().toLowerCase();const h=$('#f-holes').value==='18'?'18':'9';
+    const list=S.courses.filter(c=>c.holes===h&&(!q||c.course.toLowerCase().includes(q)||c.tee.toLowerCase().includes(q)));
+    const counts=new Map();S.rounds.forEach(x=>{const k=courseKey(x.course,x.tee,x.holes);counts.set(k,(counts.get(k)||0)+1)});
+    list.sort((a,b)=>(counts.get(courseKey(b.course,b.tee,b.holes))||0)-(counts.get(courseKey(a.course,a.tee,a.holes))||0));
+    $('#picker').innerHTML=list.slice(0,40).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${st.picked===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope}</small></button>`).join('')||`<p class="note" style="padding:10px 12px">No saved match. Type the course name, then fill in tee, rating and slope.</p>`};
+  const preview=()=>{const sc=+$('#f-score').value,ra=+$('#f-rating').value,sl=+$('#f-slope').value,h=$('#f-holes').value;
+    if(!sc||!ra||!sl){$('#pv').innerHTML='<span class="note">Enter score, rating and slope to preview the differential.</span>';return}
+    const tmp={id:'__p',date:$('#f-date').value||todayStr(),course:$('#f-search').value,tee:$('#f-tee').value,holes:h,score:sc,rating:ra,slope:sl,seq:9,createdAt:Date.now()};
+    const base=S.rounds.filter(x=>x.id!==(r&&r.id));const now=computeAll(base),after=computeAll([...base,tmp]);
+    const me=after.find(x=>x.id==='__p');const hiNow=[...now].reverse().find(x=>x.hiAfter!=null),hiAfter=[...after].reverse().find(x=>x.hiAfter!=null);
+    $('#pv').innerHTML=`<div><span>Differential</span><b class="num">${fx(me.diff)}</b></div><div><span>Index now</span><b class="num">${hiStr(hiNow&&hiNow.hiAfter)}</b></div><div><span>Index after</span><b class="num">${hiStr(hiAfter&&hiAfter.hiAfter)}</b></div>`};
+  pick();preview();
+  $('#f-search').addEventListener('input',()=>{st.picked=null;pick()});
+  $('#f-holes').addEventListener('change',()=>{st.picked=null;pick();preview()});
+  ['f-score','f-rating','f-slope','f-date'].forEach(id=>$('#'+id).addEventListener('input',preview));
+  $('#picker').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(!b)return;const c=S.courses.find(x=>x.id===b.dataset.cid);
+    st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;pick();preview();$('#f-score').focus()});
+  const close=()=>host.innerHTML='';
+  $('#fcancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
+  $('#pform').addEventListener('submit',async e=>{e.preventDefault();
+    const v={date:$('#f-date').value,course:$('#f-search').value.trim(),tee:$('#f-tee').value.trim(),holes:$('#f-holes').value,score:+$('#f-score').value,rating:+$('#f-rating').value,slope:+$('#f-slope').value};
+    const err=v.date?!v.course?'Pick or type a course.':!v.tee?'Enter the tee.':!(v.rating>25&&v.rating<90)?'Course rating looks off. Check the scorecard.':!(v.slope>=55&&v.slope<=155)?'Slope must be between 55 and 155.':!(v.score>=25&&v.score<=200)?'Enter the adjusted gross score.':'':'Pick a date.';
+    if(err){$('#ferr').textContent=err;$('#ferr').hidden=false;return}
+    $('#fsave').disabled=true;
+    try{
+      const sameDay=S.rounds.filter(x=>x.date===v.date&&(!r||x.id!==r.id)).length;
+      const rec=r?{...r,...v}:{id:'r'+Date.now().toString(36),...v,seq:sameDay+1,createdAt:Date.now()};
+      const rounds=r?S.rounds.map(x=>x.id===r.id?rec:x):[...S.rounds,rec];
+      const k=courseKey(v.course,v.tee,v.holes);let courses=S.courses;
+      if(!courses.some(c=>courseKey(c.course,c.tee,c.holes)===k)){courses=[...courses,{id:'c'+Date.now().toString(36),course:v.course,tee:v.tee,holes:v.holes==='18'?'18':'9',rating:v.rating,slope:v.slope}]}
+      await saveRounds(rounds);if(courses!==S.courses)await saveCourses(courses);
+      close();toast(r?'Round updated':'Round posted');
+    }catch(ex){$('#ferr').textContent=saveErr(ex);$('#ferr').hidden=false;$('#fsave').disabled=false}
+  });
+}
+function openCourseSheet(id){
+  const c=id?S.courses.find(x=>x.id===id):null;const host=$('#sheetHost');
+  host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="cform" novalidate><h3>${c?'Edit course':'Add course'}</h3>
+   <label for="c-name">Course<input id="c-name" value="${esc(c?c.course:'')}"></label>
+   <div class="grid2"><label for="c-tee">Tee<input id="c-tee" value="${esc(c?c.tee:'')}"></label><label for="c-holes">Holes<select id="c-holes"><option value="18">18</option><option value="9">9</option></select></label></div>
+   <div class="grid2"><label for="c-rating">Rating<input id="c-rating" type="number" step="0.1" inputmode="decimal" value="${c?c.rating:''}"></label><label for="c-slope">Slope<input id="c-slope" type="number" inputmode="numeric" value="${c?c.slope:''}"></label></div>
+   <p class="note">Changing rating or slope here affects future posts only. Rounds already posted keep their own numbers.</p>
+   <p class="note" id="cerr" style="color:var(--bad)" hidden></p>
+   <div class="actions">${c?`<button class="btn danger" type="button" id="cdel">Remove</button><span style="flex:1"></span>`:''}<button class="btn ghost" type="button" id="ccancel">Cancel</button><button class="btn" type="submit">Save course</button></div></form></div>`;
+  if(c)$('#c-holes').value=c.holes;
+  const close=()=>host.innerHTML='';$('#ccancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
+  if(c)$('#cdel').onclick=async()=>{const b=$('#cdel');if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='Tap again to remove';return}
+    try{await saveCourses(S.courses.filter(x=>x.id!==c.id));close();toast('Course removed')}catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}};
+  $('#cform').addEventListener('submit',async e=>{e.preventDefault();
+    const v={course:$('#c-name').value.trim(),tee:$('#c-tee').value.trim(),holes:$('#c-holes').value,rating:+$('#c-rating').value,slope:+$('#c-slope').value};
+    if(!v.course||!v.tee||!v.rating||!v.slope){$('#cerr').textContent='Fill in course, tee, rating and slope.';$('#cerr').hidden=false;return}
+    try{await saveCourses(c?S.courses.map(x=>x.id===c.id?{...c,...v}:x):[...S.courses,{id:'c'+Date.now().toString(36),...v}]);close();toast('Course saved')}
+    catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}});
+}
+
+/* ---------- persistence ---------- */
+function saveErr(ex){return ex&&ex.code==='permission-denied'?'The database refused the save. Check the Firestore rules.':'Could not save. Check your connection and try again.'}
+async function saveRounds(items){if(!S.db)throw{code:'unavailable'};S.rounds=items;derive();render();await S.db.collection('golf').doc('rounds').set({items})}
+async function saveCourses(items){if(!S.db)throw{code:'unavailable'};S.courses=items;render();await S.db.collection('golf').doc('courses').set({items})}
+
+/* ---------- events ---------- */
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;S.expanded=null;render();window.scrollTo({top:0})});
+$('#postBtn').addEventListener('click',()=>openSheet(null));
+$('#main').addEventListener('click',async e=>{
+  const sg=e.target.closest('[data-seg] button');if(sg){S[sg.parentElement.dataset.seg]=sg.dataset.v;render();return}
+  const ed=e.target.closest('[data-edit]');if(ed){openSheet(ed.dataset.edit);return}
+  const dl=e.target.closest('[data-del]');if(dl){if(dl.dataset.arm!=='1'){dl.dataset.arm='1';dl.textContent='Tap again to delete';return}
+    try{await saveRounds(S.rounds.filter(x=>x.id!==dl.dataset.del));S.expanded=null;render();toast('Round deleted')}catch(ex){toast(saveErr(ex))}return}
+  const ce=e.target.closest('[data-cedit]');if(ce){openCourseSheet(ce.dataset.cedit);return}
+  if(e.target.closest('#addCourse')){openCourseSheet(null);return}
+  const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
+});
+$('#main').addEventListener('keydown',e=>{const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
+$('#main').addEventListener('input',e=>{if(e.target.id==='rq'){S.q=e.target.value;render()}if(e.target.id==='cq'){S.cq=e.target.value;render()}});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.tab==='overview')drawCharts()},150)});
+
+/* ---------- boot ---------- */
+const firebaseConfig={apiKey:"AIzaSyABfymW7NTyjntVK_JqWhEHx9eREiWmkd8",authDomain:"links-8bda3.firebaseapp.com",projectId:"links-8bda3",storageBucket:"links-8bda3.firebasestorage.app",messagingSenderId:"650245638565",appId:"1:650245638565:web:e5e4275b10b9415e8e004c"};
+(async()=>{
+  let db;
+  try{firebase.initializeApp(firebaseConfig);db=firebase.firestore();
+    try{await db.enablePersistence({synchronizeTabs:true})}catch(e){}
+  }catch(e){$('#loading').textContent='Could not start the database. Check your connection and reload.';return}
+  S.db=db;
+  const roundsRef=db.collection('golf').doc('rounds'),coursesRef=db.collection('golf').doc('courses');
+  const timer=setTimeout(()=>{if(!S.ready.r)$('#loading').textContent='Still connecting to your saved rounds…'},10000);
+  let seeding=false;
+  async function seedIfNew(){ // first launch: load the GHIN history bundled with the app
+    if(seeding)return;seeding=true;
+    try{const res=await fetch('seed.json',{cache:'no-store'});const seed=await res.json();
+      await roundsRef.set({items:seed.rounds});const c=await coursesRef.get();if(!c.exists)await coursesRef.set({items:seed.courses});
+      toast('Loaded '+seed.rounds.length+' rounds from your GHIN history')}
+    catch(e){$('#main').innerHTML='<div class="card empty">Could not load your history. '+(e&&e.code==='permission-denied'?'The Firestore rules are blocking writes.':'Check your connection and reload.')+'</div>'}
+  }
+  roundsRef.onSnapshot(s=>{clearTimeout(timer);
+      if(!s.exists){if(!s.metadata.fromCache)seedIfNew();return}
+      S.rounds=s.data().items||[];S.ready.r=true;derive();render()},
+    err=>{clearTimeout(timer);$('#main').innerHTML='<div class="card empty">Could not load your rounds. '+(err.code==='permission-denied'?'The Firestore rules are blocking reads.':'Reopen the app to try again.')+'</div>'});
+  coursesRef.onSnapshot(s=>{S.courses=s.exists?(s.data().items||[]):[];S.ready.c=true;if(S.ready.r&&S.tab==='courses')render()},()=>{});
+})();
+</script>
+</body></html>

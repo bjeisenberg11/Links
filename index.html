@@ -116,6 +116,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .empty{text-align:center;color:var(--muted);padding:40px 12px}
 .note{font-size:12px;color:var(--faint)}
+.foot{display:flex;justify-content:center;align-items:center;gap:12px;padding:20px 0 8px;font-size:13px;color:var(--faint)}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--accent);font:600 13px var(--body);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:99px;font-size:14px;z-index:30}
 .yearhead{font:700 18px var(--display);padding:14px 0 4px;color:var(--muted)}
 .rowbtn{all:unset;display:contents;cursor:pointer}
@@ -172,6 +174,9 @@ function computeAll(rounds){
 function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   const ds=pool.map(o=>({o,d:o.diff+o.adj})).sort((a,b)=>a.d-b.d);const t=fewTable(ds.map(x=>x.d));const k=t?t.k:0;
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
+
+/* ---------- version ---------- */
+const VERSION = '1.3';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -382,7 +387,7 @@ function render(){
   if(!S.ready.r){return}
   const main=$('#main');
   const focusId=document.activeElement&&document.activeElement.id,sel=document.activeElement&&document.activeElement.selectionStart;
-  main.innerHTML=S.tab==='overview'?overview():S.tab==='rounds'?roundsView():coursesView();
+  main.innerHTML=(S.tab==='overview'?overview():S.tab==='rounds'?roundsView():coursesView())+`<div class="foot"><span>Version ${VERSION}</span><button class="linkbtn" type="button" id="updBtn">Check for update</button></div>`;
   if(S.tab==='overview')drawCharts();
   if(focusId&&document.getElementById(focusId)&&/^(rq|cq)$/.test(focusId)){const el=document.getElementById(focusId);el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}
 }
@@ -503,6 +508,20 @@ function saveErr(ex){return ex&&ex.code==='permission-denied'?'The database refu
 async function saveRounds(items){if(!S.db)throw{code:'unavailable'};S.rounds=items;derive();render();await S.db.collection('golf').doc('rounds').set({items})}
 async function saveCourses(items){if(!S.db)throw{code:'unavailable'};S.courses=items;render();await S.db.collection('golf').doc('courses').set({items})}
 
+async function checkUpdate(){
+  toast('Checking for an update…');
+  try{
+    const res=await fetch(location.pathname+'?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error(res.status);
+    const m=(await res.text()).match(/const VERSION = '([^']+)'/);
+    if(!m)throw new Error('no version');
+    if(m[1]===VERSION)return toast(`You have the latest version (${VERSION}).`);
+    toast(`Updating to version ${m[1]}…`);
+    await fetch(location.href,{cache:'reload'}).catch(()=>{});
+    setTimeout(()=>location.reload(),700);
+  }catch(e){toast('Couldn’t check for an update. Check the internet connection and try again.')}
+}
+
 /* ---------- events ---------- */
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;S.expanded=null;render();window.scrollTo({top:0})});
 $('#postBtn').addEventListener('click',()=>openSheet(null));
@@ -513,6 +532,7 @@ $('#main').addEventListener('click',async e=>{
     try{await saveRounds(S.rounds.filter(x=>x.id!==dl.dataset.del));S.expanded=null;render();toast('Round deleted')}catch(ex){toast(saveErr(ex))}return}
   const ce=e.target.closest('[data-cedit]');if(ce){openCourseSheet(ce.dataset.cedit);return}
   if(e.target.closest('#addCourse')){openCourseSheet(null);return}
+  if(e.target.closest('#updBtn')){checkUpdate();return}
   const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
 });
 $('#main').addEventListener('keydown',e=>{const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});

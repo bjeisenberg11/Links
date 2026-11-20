@@ -119,6 +119,22 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.tbl tr.tap{cursor:pointer}.tbl tr.tap:active td,.li.tap:active{background:var(--soft)}
+.tbl tr.tap td:first-child{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:-6px auto 0;flex:none}
+.sheet{touch-action:pan-y;will-change:transform}
+.sheet>*{flex-shrink:0}
+.sheet .row-head{flex-wrap:nowrap;align-items:flex-start}.sheet .row-head h3{min-width:0}.sheet .row-head .linkbtn{flex:none;margin-top:4px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:99px;padding:8px 12px;font:500 13px var(--body);cursor:pointer;white-space:nowrap}
+.chip small{color:var(--muted);margin-left:4px}
+.stat4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat4 div{border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center}
+.stat4 b{display:block;font:700 22px/1.1 var(--display)}.stat4 small{font-size:11px;color:var(--muted)}
+.teelist{display:flex;flex-direction:column;gap:6px}
+.teerow{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px}
+.teerow small{display:block;color:var(--muted);font-size:12px}
 .picked{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
 .picked small{display:block;color:var(--muted);font-size:12px}
 .picked .linkbtn{flex:none}
@@ -187,7 +203,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.4';   // bump on every change so Check for update can see it
+const VERSION = '1.5';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -217,7 +233,7 @@ function attachTip(el,points,fmt,opts={}){ // points: [{x,y,...}] in px
   function show(px){if(!points.length)return;let best=points[0],bd=1e9;
     for(const p of points){const d=Math.abs(p.x-px)+(opts.useY?0:0);if(d<bd){bd=d;best=p}}
     tip.hidden=false;tip.innerHTML=fmt(best);
-    const w=el.clientWidth;tip.style.left=Math.min(Math.max(best.x,70),w-70)+'px';tip.style.top=(best.y-10)+'px';
+    const w=el.clientWidth;tip.style.left=Math.min(Math.max(best.x,70),w-70)+'px';if(best.y<56){tip.style.top=(best.y+14)+'px';tip.style.transform='translate(-50%,0)'}else{tip.style.top=(best.y-10)+'px';tip.style.transform=''}
     if(cross){cross.setAttribute('x1',best.x);cross.setAttribute('x2',best.x);cross.style.display=''}
     if(dot){dot.setAttribute('cx',best.x);dot.setAttribute('cy',best.y);dot.style.display=''}}
   function hide(){tip.hidden=true;if(cross)cross.style.display='none';if(dot)dot.style.display='none'}
@@ -308,7 +324,7 @@ function overview(){
     <div class="chart" id="diffChart"></div>
     <div class="legend"><span><i style="background:var(--accent);opacity:.45"></i>Round</span><span><i style="background:var(--ink);border-radius:2px;height:3px;vertical-align:3px"></i>20-round average</span></div></section>
   ${slopeCard()}
-  <section class="card"><h2>Rounds by year</h2><p class="sub">Tap a bar for that year's average score and differential.</p><div class="chart" id="yearChart"></div><div id="yearTable" class="scroll"></div></section>
+  <section class="card"><h2>Rounds by year</h2><p class="sub">Tap a bar for the year's averages, or a table row to see its rounds.</p><div class="chart" id="yearChart"></div><div id="yearTable" class="scroll"></div></section>
   <section class="card"><h2>By month of the season</h2><p class="sub">Average differential by calendar month, all years. Lower is better.</p><div class="chart" id="monthChart"></div></section>
   <section class="card"><h2>Score distribution</h2><p class="sub">18-hole gross scores, last 12 months vs. all time.</p><div class="chart" id="distChart"></div>
     <div class="legend"><span><i style="background:var(--accent)"></i>Last 12 mo</span><span><i style="background:var(--faint)"></i>Earlier</span></div></section>
@@ -330,20 +346,23 @@ function slopeData(){const rs=rangeStart(S.slopeRange);const rr=S.calc.filter(r=
   return{rr,all,bins}}
 function slopeCard(){const {rr,all,bins}=slopeData();if(rr.length<8)return'';
   const usable=bins.filter(b=>b.n>=4);let concl='';
-  if(usable.length>=2){const e=usable[0],h=usable[usable.length-1],gap=r1(h.ad-e.ad);
-    const best=usable.reduce((a,b)=>b.ad<a.ad?b:a);
-    concl=gap>=1?`On the hardest courses (slope ${esc(h.label)}) your differentials run <b>${fx(gap)}</b> higher than on the easiest (${esc(e.label)}). Slope isn't fully covering how much tougher those courses play for you.`
-      :gap<=-1?`You play <b>${fx(-gap)}</b> better relative to the rating on the hardest courses (slope ${esc(h.label)}) than on the easiest (${esc(e.label)}). Tough courses don't rattle you; easy ones may be costing focus.`
-      :`Your differentials barely move with difficulty (a ${fx(Math.abs(gap))} stroke gap from easiest to hardest). Slope is pricing courses fairly for your game.`;
-    concl+=` Your best bucket is <b>${esc(best.label)}</b> at ${fx(best.ad)}.`}
+  if(usable.length>=2){
+    const best=usable.reduce((a,b)=>b.ad<a.ad?b:a),worst=usable.reduce((a,b)=>b.ad>a.ad?b:a),spread=r1(worst.ad-best.ad);
+    const e=usable[0],hd=usable[usable.length-1],gap=r1(hd.ad-e.ad);
+    if(spread<1)concl=`Your differentials barely move with difficulty (${fx(spread)} strokes between your best and worst slope range). Slope is pricing courses fairly for your game.`;
+    else if(worst===hd&&gap>=1)concl=`Your differentials climb as courses get harder: <b>${fx(gap)}</b> higher at slope ${esc(hd.label)} than at ${esc(e.label)}. Slope isn't fully covering how much tougher those courses play for you.`;
+    else if(best===hd&&gap<=-1)concl=`You play <b>${fx(-gap)}</b> better relative to the rating at slope ${esc(hd.label)} than at ${esc(e.label)}. Tough courses bring out your best; easier ones may be costing focus.`;
+    else concl=`No steady pattern with difficulty. Your worst range is <b>${esc(worst.label)}</b> (${fx(worst.ad)}), ${fx(spread)} strokes behind your best, <b>${esc(best.label)}</b> (${fx(best.ad)}). Tap that row to see which rounds drive it.`;
+    const thin=bins.filter(b=>b.n>0&&b.n<4).map(b=>b.label);
+    if(thin.length)concl+=` <span class="note">Not enough rounds to judge ${thin.map(esc).join(' or ')}.</span>`}
   return `<section class="card"><div class="row-head"><h2>Course difficulty</h2>${seg('slopeRange')}</div>
    <p class="sub">Average differential by slope. Differentials already adjust for difficulty, so a flat chart means slope rates courses fairly for you. Lower is better.</p>
    <div class="chart" id="slopeChart"></div>
    ${concl?`<div class="callout">${concl}</div>`:''}
    <div class="scroll"><table class="tbl"><thead><tr><th>Slope</th><th class="n">Rounds</th><th class="n">Avg score</th><th class="n">Over rating</th><th class="n">Avg diff</th><th class="n">Best</th></tr></thead><tbody>
-   ${bins.map(b=>`<tr><td class="y">${b.short}</td><td class="n">${b.n}</td><td class="n">${fx(b.as)}</td><td class="n">${b.over==null?'—':'+'+fx(b.over)}</td><td class="n">${fx(b.ad)}</td><td class="n">${fx(b.best)}</td></tr>`).join('')}
+   ${bins.map((b,bi)=>`<tr class="tap" data-drill="slope:${bi}" tabindex="0"><td class="y">${b.short}</td><td class="n">${b.n}</td><td class="n">${fx(b.as)}</td><td class="n">${b.over==null?'—':'+'+fx(b.over)}</td><td class="n">${fx(b.ad)}</td><td class="n">${fx(b.best)}</td></tr>`).join('')}
    </tbody></table></div>
-   <p class="note">"Over rating" is your average 18-hole score minus the course rating. Rounds with fewer than 4 in a bucket are left out of the conclusion.</p></section>`}
+   <p class="note">Tap a row to see those rounds. "Over rating" is your average 18-hole score minus the course rating. Rounds with fewer than 4 in a bucket are left out of the conclusion.</p></section>`}
 function drawSlope(){const el=$('#slopeChart');if(!el)return;const {all,bins}=slopeData();
   barChart(el,bins.map(b=>({label:b.short,v:b.ad||0,n:b.n,b,vl:b.n?fx(b.ad):'',color:b.n>=4&&b.ad<=all?'var(--accent)':'var(--faint)'})),
    {h:170,label:'Average differential by slope',valueLabels:true,fmt:p=>p.n?`<b>Slope ${esc(p.b.label)}</b><br>Avg diff ${fx(p.v)} · ${p.n} rounds`:`<b>Slope ${esc(p.b.label)}</b> · no rounds`})}
@@ -365,7 +384,7 @@ function mostPlayed(){const cs=courseStats().filter(c=>c.rounds.some(r=>r.holes=
   const max=cs[0].rounds.length;
   return `<section class="card"><div class="row-head"><h2>Most played courses</h2><span class="note">${courseStats().length} courses total</span></div>
   <div class="list">${cs.map(c=>{const r18=c.rounds.filter(r=>r.holes==='18');const sc=r18.map(r=>r.score);
-   return `<div class="li"><div class="t">${esc(c.course)}<div class="m">Avg ${fx(avg(sc))} · best ${Math.min(...sc)} · avg diff ${fx(avg(r18.map(r=>r.diff)))}</div><div class="bar" style="width:${c.rounds.length/max*100}%"></div></div><div class="r num">${c.rounds.length}<small>rounds</small></div></div>`}).join('')}</div></section>`}
+   return `<div class="li tap" data-drill="course:${encodeURIComponent(c.course)}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">Avg ${fx(avg(sc))} · best ${Math.min(...sc)} · avg diff ${fx(avg(r18.map(r=>r.diff)))}</div><div class="bar" style="width:${c.rounds.length/max*100}%"></div></div><div class="r num">${c.rounds.length}<small>rounds</small></div></div>`}).join('')}</div></section>`}
 function bestScores(){const b=S.calc.filter(r=>r.diff!=null).slice().sort((a,b)=>a.diff-b.diff).slice(0,20);if(!b.length)return'';
   return `<section class="card"><h2>Best 20 differentials</h2><div class="scroll"><table class="tbl"><thead><tr><th>Date</th><th>Course</th><th class="n">Score</th><th class="n">Diff</th></tr></thead><tbody>
   ${b.map(r=>`<tr><td class="y">${fmtD(r.date)}</td><td>${esc(r.course)}<div class="note">${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''}</div></td><td class="n">${r.score}</td><td class="n">${fx(r.diff)}</td></tr>`).join('')}</tbody></table></div></section>`}
@@ -387,9 +406,9 @@ function coursesView(){
   const q=S.cq.trim().toLowerCase();
   const cs=S.courses.slice().filter(c=>!q||c.course.toLowerCase().includes(q)).sort((a,b)=>(play.get(courseKey(b.course,b.tee,b.holes))||[]).length-(play.get(courseKey(a.course,a.tee,a.holes))||[]).length||a.course.localeCompare(b.course));
   return `<section class="card"><div class="row-head"><label for="cq" style="flex:1">Search courses<input id="cq" type="search" placeholder="Course name" value="${esc(S.cq)}"></label></div>
-  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one to edit it. These fill in rating and slope when you post.</p></section>
+  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one for its rounds and to edit it. These fill in rating and slope when you post.</p></section>
   <section class="card"><div class="list">${cs.map(c=>{const ps=play.get(courseKey(c.course,c.tee,c.holes))||[];
-   return `<div class="li tap" data-cedit="${c.id}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
+   return `<div class="li tap" data-drill="course:${encodeURIComponent(c.course)}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
    <div class="r num">${ps.length}<small>played</small></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
 }
 
@@ -421,7 +440,7 @@ function drawCharts(){
   const y0=Math.min(...[...ys.keys()].map(Number)),y1=Math.max(...[...ys.keys()].map(Number));const yi=[];
   for(let y=y0;y<=y1;y++){const rr=ys.get(String(y))||[];const r18=rr.filter(r=>r.holes==='18');yi.push({label:"'"+String(y).slice(2),y,v:roundsCount(rr),avg:avg(r18.map(r=>r.score)),ad:avg(rr.filter(r=>r.diff!=null).map(r=>r.diff)),low:r18.length?Math.min(...r18.map(r=>r.score)):null,vl:roundsCount(rr)})}
   const el3=$('#yearChart');if(el3)barChart(el3,yi,{h:170,label:'Rounds by year',valueLabels:true,fmt:p=>`<b>${p.y}</b> · ${p.v} rounds<br>Avg ${fx(p.avg)} · diff ${fx(p.ad)}`});
-  const yt=$('#yearTable');if(yt)yt.innerHTML=`<table class="tbl"><thead><tr><th>Year</th><th class="n">Rounds</th><th class="n">Avg</th><th class="n">Best</th><th class="n">Avg diff</th><th class="n">Year-end</th></tr></thead><tbody>${yi.slice().reverse().filter(y=>y.v).map(y=>{const ye=[...C].reverse().find(r=>r.date.slice(0,4)<=String(y.y)&&r.hiAfter!=null);return`<tr><td class="y">${y.y}</td><td class="n">${y.v}</td><td class="n">${fx(y.avg)}</td><td class="n">${y.low??'—'}</td><td class="n">${fx(y.ad)}</td><td class="n">${hiStr(ye&&ye.hiAfter)}</td></tr>`}).join('')}</tbody></table>`;
+  const yt=$('#yearTable');if(yt)yt.innerHTML=`<table class="tbl"><thead><tr><th>Year</th><th class="n">Rounds</th><th class="n">Avg</th><th class="n">Best</th><th class="n">Avg diff</th><th class="n">Year-end</th></tr></thead><tbody>${yi.slice().reverse().filter(y=>y.v).map(y=>{const ye=[...C].reverse().find(r=>r.date.slice(0,4)<=String(y.y)&&r.hiAfter!=null);return`<tr class="tap" data-drill="year:${y.y}" tabindex="0"><td class="y">${y.y}</td><td class="n">${y.v}</td><td class="n">${fx(y.avg)}</td><td class="n">${y.low??'—'}</td><td class="n">${fx(y.ad)}</td><td class="n">${hiStr(ye&&ye.hiAfter)}</td></tr>`}).join('')}</tbody></table>`;
   // months
   const ms=Array.from({length:12},()=>[]);d.forEach(r=>ms[+r.date.slice(5,7)-1].push(r.diff));
   const mn=['J','F','M','A','M','J','J','A','S','O','N','D'],mf=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -442,7 +461,12 @@ function drawCharts(){
 function fitViewport(){const vv=window.visualViewport;const r=document.documentElement;
   if(vv){r.style.setProperty('--vvh',vv.height+'px');const bg=document.querySelector('.sheet-bg');if(bg)bg.style.top=vv.offsetTop+'px'}}
 function onFieldFocus(e){if(!e.target.matches('.sheet input,.sheet select'))return;setTimeout(()=>{try{e.target.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},320)}
-function sheetOpened(){document.documentElement.classList.add('lockscroll');fitViewport();
+function enableSwipe(){const sh=document.querySelector('#sheetHost .sheet');if(!sh)return;let y0=null,dy=0;
+  sh.addEventListener('touchstart',e=>{if(sh.scrollTop>0||e.target.closest('input,select,.picker,.chips,.chart')){y0=null;return}y0=e.touches[0].clientY;dy=0;sh.style.transition='none'},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy>0){e.preventDefault();sh.style.transform=`translateY(${dy}px)`}},{passive:false});
+  sh.addEventListener('touchend',()=>{if(y0==null)return;sh.style.transition='transform .18s ease-out';
+    if(dy>110){sh.style.transform='translateY(100%)';setTimeout(closeSheet,170)}else sh.style.transform='';y0=null})}
+function sheetOpened(){document.documentElement.classList.add('lockscroll');fitViewport();enableSwipe();
   if(window.visualViewport){visualViewport.addEventListener('resize',fitViewport);visualViewport.addEventListener('scroll',fitViewport)}
   document.addEventListener('focusin',onFieldFocus)}
 function closeSheet(){$('#sheetHost').innerHTML='';document.documentElement.classList.remove('lockscroll');
@@ -450,15 +474,48 @@ function closeSheet(){$('#sheetHost').innerHTML='';document.documentElement.clas
   document.removeEventListener('focusin',onFieldFocus)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheetHost').innerHTML)closeSheet()});
 
+/* ---------- drill-down sheets ---------- */
+function roundRows(list){return list.map(r=>`<div class="li tap" data-rid-edit="${r.id}" role="button" tabindex="0"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}</div></div><div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div></div>`).join('')}
+function statBlock(list){const d=list.filter(r=>r.diff!=null),s18=list.filter(r=>r.holes==='18');
+  return `<div class="stat4"><div><b class="num">${(n=>n%1?fx(n):n)(roundsCount(list))}</b><small>Rounds</small></div><div><b class="num">${fx(avg(s18.map(r=>r.score)))}</b><small>Avg score</small></div><div><b class="num">${fx(avg(d.map(r=>r.diff)))}</b><small>Avg diff</small></div><div><b class="num">${s18.length?Math.min(...s18.map(r=>r.score)):'—'}</b><small>Best</small></div></div>`}
+function openDrill(title,sub,list,extra=''){
+  const rows=list.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  $('#sheetHost').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-label="${esc(title)}"><div class="grab" aria-hidden="true"></div>
+   <div class="row-head"><h3>${esc(title)}</h3><button class="linkbtn" type="button" id="dclose">Close</button></div>${sub?`<p class="sub">${sub}</p>`:''}
+   ${statBlock(list)}${extra}
+   ${rows.filter(r=>r.diff!=null).length>=3?'<div class="chart" id="drillChart"></div>':''}
+   <div class="list">${roundRows(rows)||'<p class="note">No rounds.</p>'}</div>
+   <p class="note">Tap a round to edit it.</p></div></div>`;
+  sheetOpened();
+  $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
+    const r=e.target.closest('[data-rid-edit]');if(r){closeSheet();openSheet(r.dataset.ridEdit);return}
+    const c=e.target.closest('[data-cedit]');if(c){closeSheet();openCourseSheet(c.dataset.cedit)}});
+  const el=$('#drillChart');if(el){const T=d=>Date.parse(d+'T12:00:00Z');const pts=sortRounds(list).filter(r=>r.diff!=null).map(r=>({t:T(r.date),v:r.diff,r}));
+    timeChart(el,[{pts,kind:'line',color:'var(--faint)',w:1.5},{pts,kind:'dots',color:'var(--accent)'}],{h:150,label:'Differentials',fmt:p=>`<b>${fx(p.v)}</b> · ${p.r.score}<br>${fmtD(p.r.date)} · ${esc(p.r.tee)}`})}
+}
+function drill(key){const [kind,...rest]=key.split(':');const val=rest.join(':');
+  if(kind==='slope'){const b=SLOPE_BINS[+val],rs=rangeStart(S.slopeRange);const lbl={'1y':'last 12 months','3y':'last 3 years','all':'all time'}[S.slopeRange];
+    openDrill(`Slope ${b.label}`,`Rounds on courses with slope ${esc(b.label)}, ${lbl}.`,S.calc.filter(r=>r.diff!=null&&r.date>=rs&&r.slope>=b.lo&&r.slope<=b.hi))}
+  else if(kind==='year'){openDrill(`${val} season`,'',S.calc.filter(r=>r.date.startsWith(val)))}
+  else if(kind==='course'){const name=decodeURIComponent(val);const list=S.calc.filter(r=>r.course===name);
+    const tees=S.courses.filter(c=>c.course===name);const play=t=>list.filter(r=>courseKey(r.course,r.tee,r.holes)===courseKey(t.course,t.tee,t.holes));
+    const all=avg(S.calc.filter(r=>r.diff!=null).map(r=>r.diff)),here=avg(list.filter(r=>r.diff!=null).map(r=>r.diff));
+    const vs=here!=null&&list.length>=3?`<p class="sub">You average ${fx(here)} here vs. ${fx(all)} overall, so you play <b>${fx(Math.abs(here-all))} strokes ${here<=all?'better':'worse'}</b> than usual relative to the rating.</p>`:'';
+    const teeHtml=tees.length?`<div class="teelist">${tees.map(t=>`<div class="teerow"><div>${esc(t.tee)} · ${t.holes==='18'?'18':'9'} holes<small>${fx(t.rating)} / ${t.slope} · ${play(t).length} played</small></div><button class="linkbtn" type="button" data-cedit="${t.id}">Edit</button></div>`).join('')}</div>`:'';
+    openDrill(name,'',list,vs+teeHtml)}
+}
+
 /* ---------- post / edit sheet ---------- */
 function openSheet(edit){
   const r=edit?S.rounds.find(x=>x.id===edit):null;
   const st={course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:'18',rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
   const host=$('#sheetHost');
   host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="pform" novalidate>
+   <div class="grab" aria-hidden="true"></div>
    <h3>${r?'Edit round':'Post a round'}</h3>
    <div class="grid2"><label for="f-date">Date<input id="f-date" type="date" value="${st.date}" required></label>
     <label for="f-holes">Holes<select id="f-holes"><option value="18">18 holes</option><option value="F9">Front 9</option><option value="B9">Back 9</option></select></label></div>
+   <div class="chips" id="recent" aria-label="Recent courses"></div>
    <label for="f-search">Course<input id="f-search" type="search" placeholder="Search your saved courses" autocomplete="off" value="${esc(st.course)}"></label>
    <div class="picked" id="picked" hidden></div>
    <div class="picker" id="picker" role="listbox" aria-label="Saved courses"></div>
@@ -485,14 +542,21 @@ function openSheet(edit){
     $('#pv').innerHTML=`<div><span>Differential</span><b class="num">${fx(me.diff)}</b></div><div><span>Index now</span><b class="num">${hiStr(hiNow&&hiNow.hiAfter)}</b></div><div><span>Index after</span><b class="num">${hiStr(hiAfter&&hiAfter.hiAfter)}</b></div>`};
   const showPicked=()=>{const on=!!st.picked;$('#picker').hidden=on;$('#picked').hidden=!on;
     if(on)$('#picked').innerHTML=`<div>${esc($('#f-search').value)}<small>${esc($('#f-tee').value)} · ${fx(+$('#f-rating').value)} / ${$('#f-slope').value}</small></div><button type="button" class="linkbtn" id="chgCourse">Change</button>`};
-  pick();preview();showPicked();
-  $('#picked').addEventListener('click',e=>{if(e.target.closest('#chgCourse')){st.picked=null;showPicked();pick();$('#f-search').focus()}});
-  $('#f-search').addEventListener('input',()=>{st.picked=null;showPicked();pick()});
-  $('#f-search').addEventListener('focus',()=>{if(st.picked){st.picked=null;showPicked();pick()}});
-  $('#f-holes').addEventListener('change',()=>{st.picked=null;pick();preview()});
+  const recent=()=>{const seen=new Set(),out=[];const h9=$('#f-holes').value==='18'?'18':'9';
+    for(const x of sortRounds(S.rounds).reverse()){const k=courseKey(x.course,x.tee,x.holes);if(seen.has(k))continue;seen.add(k);
+      const c=S.courses.find(cc=>courseKey(cc.course,cc.tee,cc.holes)===k);if(c&&c.holes===h9)out.push(c);if(out.length>=5)break}
+    $('#recent').innerHTML=out.map(c=>`<button type="button" class="chip" data-cid="${c.id}">${esc(shortCourse(c.course))}<small>${esc(c.tee)}</small></button>`).join('');
+    $('#recent').hidden=!!st.picked||!out.length};
+  const choose=id=>{const c=S.courses.find(x=>x.id===id);if(!c)return;
+    st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;$('#f-search').blur();pick();showPicked();recent();preview();$('#f-score').focus()};
+  $('#recent').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(b)choose(b.dataset.cid)});
+  pick();preview();showPicked();recent();
+  $('#picked').addEventListener('click',e=>{if(e.target.closest('#chgCourse')){st.picked=null;showPicked();pick();recent();$('#f-search').focus()}});
+  $('#f-search').addEventListener('input',()=>{st.picked=null;showPicked();pick();recent()});
+  $('#f-search').addEventListener('focus',()=>{if(st.picked){st.picked=null;showPicked();pick();recent()}});
+  $('#f-holes').addEventListener('change',()=>{st.picked=null;showPicked();pick();recent();preview()});
   ['f-score','f-rating','f-slope','f-date'].forEach(id=>$('#'+id).addEventListener('input',preview));
-  $('#picker').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(!b)return;const c=S.courses.find(x=>x.id===b.dataset.cid);
-    st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;$('#f-search').blur();pick();showPicked();preview();$('#f-score').focus()});
+  $('#picker').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(b)choose(b.dataset.cid)});
   const close=closeSheet;sheetOpened();
   $('#fcancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
   $('#pform').addEventListener('submit',async e=>{e.preventDefault();
@@ -513,7 +577,7 @@ function openSheet(edit){
 }
 function openCourseSheet(id){
   const c=id?S.courses.find(x=>x.id===id):null;const host=$('#sheetHost');
-  host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="cform" novalidate><h3>${c?'Edit course':'Add course'}</h3>
+  host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="cform" novalidate><div class="grab" aria-hidden="true"></div><h3>${c?'Edit course':'Add course'}</h3>
    <label for="c-name">Course<input id="c-name" value="${esc(c?c.course:'')}"></label>
    <div class="grid2"><label for="c-tee">Tee<input id="c-tee" value="${esc(c?c.tee:'')}"></label><label for="c-holes">Holes<select id="c-holes"><option value="18">18</option><option value="9">9</option></select></label></div>
    <div class="grid2"><label for="c-rating">Rating<input id="c-rating" type="number" step="0.1" inputmode="decimal" value="${c?c.rating:''}"></label><label for="c-slope">Slope<input id="c-slope" type="number" inputmode="numeric" value="${c?c.slope:''}"></label></div>
@@ -555,6 +619,7 @@ document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.cl
 $('#postBtn').addEventListener('click',()=>openSheet(null));
 $('#main').addEventListener('click',async e=>{
   const sg=e.target.closest('[data-seg] button');if(sg){S[sg.parentElement.dataset.seg]=sg.dataset.v;render();return}
+  const dr=e.target.closest('[data-drill]');if(dr){drill(dr.dataset.drill);return}
   const ed=e.target.closest('[data-edit]');if(ed){openSheet(ed.dataset.edit);return}
   const dl=e.target.closest('[data-del]');if(dl){if(dl.dataset.arm!=='1'){dl.dataset.arm='1';dl.textContent='Tap again to delete';return}
     try{await saveRounds(S.rounds.filter(x=>x.id!==dl.dataset.del));S.expanded=null;render();toast('Round deleted')}catch(ex){toast(saveErr(ex))}return}
@@ -563,7 +628,7 @@ $('#main').addEventListener('click',async e=>{
   if(e.target.closest('#updBtn')){checkUpdate();return}
   const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
 });
-$('#main').addEventListener('keydown',e=>{const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
+$('#main').addEventListener('keydown',e=>{const dk=e.target.closest('[data-drill]');if(dk&&(e.key==='Enter'||e.key===' ')){e.preventDefault();drill(dk.dataset.drill);return}const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
 $('#main').addEventListener('input',e=>{if(e.target.id==='rq'){S.q=e.target.value;render()}if(e.target.id==='cq'){S.cq=e.target.value;render()}});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.tab==='overview')drawCharts()},150)});
 

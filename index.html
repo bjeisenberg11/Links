@@ -213,7 +213,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.6';   // bump on every change so Check for update can see it
+const VERSION = '1.7';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -332,7 +332,6 @@ function overview(){
       </div>
     </div>
   </section>
-  ${insightsCard()}
   <section class="card"><h2>Rounds posted</h2>
     <div class="tiles"><div class="tile"><b class="num">${fx(ytd)}</b><small>YTD</small></div><div class="tile"><b class="num">${fx(m12)}</b><small>Last 12 mo</small></div><div class="tile"><b class="num">${fx(all)}</b><small>All rounds</small></div></div>
     <p class="note">9-hole rounds count as half.</p>
@@ -341,6 +340,7 @@ function overview(){
     <p class="sub">Best ${hiStr(best&&best.hiAfter)} on ${best?fmtD(best.date):'—'} · flag marks your low point</p>
     <div class="chart" id="hiChart"></div></section>
   ${recordCard(rec,hi)}
+  ${insightsCard()}
   `;
 }
 function trendsView(){if(!S.calc.length)return `<div class="card empty">No rounds yet.</div>`;

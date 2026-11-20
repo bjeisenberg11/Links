@@ -61,7 +61,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .tile b{font:700 26px/1 var(--display);display:block}
 .tile small{font-size:12px;color:var(--muted)}
 .seg{display:flex;gap:4px}
-.seg button{border:1px solid var(--line);background:transparent;color:var(--muted);font:600 12px var(--body);padding:4px 10px;border-radius:99px;cursor:pointer}
+.seg button{border:1px solid var(--line);background:transparent;color:var(--muted);font:600 12px var(--body);padding:0 12px;min-height:32px;border-radius:99px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .row-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .chart{position:relative;width:100%;touch-action:pan-y}
@@ -98,7 +98,12 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .tbl td.n,.tbl td.y{font-family:var(--display);font-size:16px;font-variant-numeric:tabular-nums}
 .tbl td.n{text-align:right}
 .scroll{overflow-x:auto}
-input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 12px;width:100%;min-width:0;max-width:100%;height:46px;display:block;margin:0}
+input[type=date]{-webkit-appearance:none;appearance:none;text-align:left;line-height:46px}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.6}
+select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 20px,calc(100% - 13px) 20px;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.grid2>*,.grid3>*{min-width:0}
 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -107,18 +112,24 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .picker button:first-child{border-top:0}
 .picker button small{color:var(--muted)}
 .picker button[aria-selected="true"]{background:var(--soft)}
-.sheet-bg{position:fixed;inset:0;background:rgba(10,16,12,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;
+.sheet-bg{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);background:rgba(10,16,12,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:calc(var(--vvh,100vh) - 24px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;
   padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .sheet h3{margin:0;font:700 22px var(--display)}
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
+.lockscroll,.lockscroll body{overflow:hidden}
+.picked{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.picked small{display:block;color:var(--muted);font-size:12px}
+.picked .linkbtn{flex:none}
+.li.tap{cursor:pointer}
+.tbl td.y{white-space:nowrap}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .empty{text-align:center;color:var(--muted);padding:40px 12px}
 .note{font-size:12px;color:var(--faint)}
 .foot{display:flex;justify-content:center;align-items:center;gap:12px;padding:20px 0 8px;font-size:13px;color:var(--faint)}
 .linkbtn{background:none;border:0;padding:4px 2px;color:var(--accent);font:600 13px var(--body);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:99px;font-size:14px;z-index:30}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25);transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:99px;font-size:14px;z-index:30}
 .yearhead{font:700 18px var(--display);padding:14px 0 4px;color:var(--muted)}
 .rowbtn{all:unset;display:contents;cursor:pointer}
 .expand{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;align-items:center}
@@ -176,7 +187,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.3';   // bump on every change so Check for update can see it
+const VERSION = '1.4';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -277,7 +288,7 @@ function overview(){
     <div class="hero">
       <div class="hi-dial"><div><b class="num">${hiStr(hi)}</b><span>Index</span></div></div>
       <div class="kv">
-        <div><small>Low index, last 12 mo</small><strong class="num">${hiStr(low12)}</strong></div>
+        <div><small>12-month low</small><strong class="num">${hiStr(low12)}</strong></div>
         <div><small>12 months ago</small><strong class="num">${hiStr(ago)}</strong></div>
         <div><small>Best ever</small><strong class="num">${hiStr(best&&best.hiAfter)}</strong><small>${best?fmtLong(best.date):''}</small></div>
         <div><small>Change, 12 mo</small>${chg==null?'<strong>—</strong>':`<span class="pill ${chg>0?'up':''}">${chg>0?'▲ +':chg<0?'▼ ':''}${Math.abs(chg).toFixed(1)}${chg<0?' better':chg>0?' higher':''}</span>`}</div>
@@ -330,7 +341,7 @@ function slopeCard(){const {rr,all,bins}=slopeData();if(rr.length<8)return'';
    <div class="chart" id="slopeChart"></div>
    ${concl?`<div class="callout">${concl}</div>`:''}
    <div class="scroll"><table class="tbl"><thead><tr><th>Slope</th><th class="n">Rounds</th><th class="n">Avg score</th><th class="n">Over rating</th><th class="n">Avg diff</th><th class="n">Best</th></tr></thead><tbody>
-   ${bins.map(b=>`<tr><td class="y">${b.label}</td><td class="n">${b.n}</td><td class="n">${fx(b.as)}</td><td class="n">${b.over==null?'—':'+'+fx(b.over)}</td><td class="n">${fx(b.ad)}</td><td class="n">${fx(b.best)}</td></tr>`).join('')}
+   ${bins.map(b=>`<tr><td class="y">${b.short}</td><td class="n">${b.n}</td><td class="n">${fx(b.as)}</td><td class="n">${b.over==null?'—':'+'+fx(b.over)}</td><td class="n">${fx(b.ad)}</td><td class="n">${fx(b.best)}</td></tr>`).join('')}
    </tbody></table></div>
    <p class="note">"Over rating" is your average 18-hole score minus the course rating. Rounds with fewer than 4 in a bucket are left out of the conclusion.</p></section>`}
 function drawSlope(){const el=$('#slopeChart');if(!el)return;const {all,bins}=slopeData();
@@ -341,7 +352,7 @@ function recordCard(rec,hi){
   const cells=rec.pool.slice().reverse().map((o,i)=>`<div class="cell ${rec.counting.has(o.id)?'count':''} ${i===rec.pool.length-1&&rec.pool.length===20?'old':''}" title="${esc(o.course)}"><span class="d num">${fx(o.diff+o.adj)}</span><span class="c">${esc(shortCourse(o.course))}</span><small>${o.score} · ${fmtD(o.date)}</small></div>`).join('');
   const oldest=rec.pool.length===20?rec.pool[0]:null;
   const home=topTee();let need='';
-  if(rec.threshold!=null&&home){const sc=Math.floor(rec.threshold*home.slope/113+home.rating);need=`<div class="callout">To make your best ${rec.k}, post a differential of <b>${fx(rec.threshold)}</b> or lower. At ${esc(home.course)} (${esc(home.tee)}) that's <b>${sc}</b> or better.</div>`}
+  if(rec.threshold!=null&&home){const sc=Math.floor(rec.threshold*home.slope/113+home.rating);need=`<div class="callout">To make your best ${rec.k}, post a differential of <b>${fx(rec.threshold)}</b> or lower. At ${esc(shortCourse(home.course))} (${esc(home.tee)}) that's <b>${sc}</b> or better.</div>`}
   return `<section class="card"><h2>Scoring record · last ${rec.pool.length}</h2>
    <p class="sub">Newest first. Circled scores are the ${rec.k} that make up your index.</p>
    <div class="record">${cells}</div>
@@ -376,10 +387,10 @@ function coursesView(){
   const q=S.cq.trim().toLowerCase();
   const cs=S.courses.slice().filter(c=>!q||c.course.toLowerCase().includes(q)).sort((a,b)=>(play.get(courseKey(b.course,b.tee,b.holes))||[]).length-(play.get(courseKey(a.course,a.tee,a.holes))||[]).length||a.course.localeCompare(b.course));
   return `<section class="card"><div class="row-head"><label for="cq" style="flex:1">Search courses<input id="cq" type="search" placeholder="Course name" value="${esc(S.cq)}"></label></div>
-  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. These fill in rating and slope when you post.</p></section>
+  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one to edit it. These fill in rating and slope when you post.</p></section>
   <section class="card"><div class="list">${cs.map(c=>{const ps=play.get(courseKey(c.course,c.tee,c.holes))||[];
-   return `<div class="li"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
-   <div class="r num" style="display:flex;gap:8px;align-items:center">${ps.length}<small style="display:inline">played</small><button class="btn ghost" type="button" data-cedit="${c.id}" style="padding:6px 10px">Edit</button></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
+   return `<div class="li tap" data-cedit="${c.id}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
+   <div class="r num">${ps.length}<small>played</small></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
 }
 
 function render(){
@@ -416,7 +427,7 @@ function drawCharts(){
   const mn=['J','F','M','A','M','J','J','A','S','O','N','D'],mf=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const overall=avg(d.map(r=>r.diff));
   const mi=ms.map((a,i)=>({label:mn[i],v:a.length?avg(a):0,n:a.length,m:mf[i],vl:a.length?fx(avg(a)):'',color:a.length&&avg(a)<=overall?'var(--accent)':'var(--faint)'}));
-  const el4=$('#monthChart');if(el4)barChart(el4,mi,{h:170,label:'Average differential by month',valueLabels:true,fmt:p=>p.n?`<b>${p.m}</b> · avg diff ${fx(p.v)}<br>${p.n} rounds`:`<b>${p.m}</b> · no rounds`});
+  const el4=$('#monthChart');if(el4)barChart(el4,mi,{h:170,label:'Average differential by month',fmt:p=>p.n?`<b>${p.m}</b> · avg diff ${fx(p.v)}<br>${p.n} rounds`:`<b>${p.m}</b> · no rounds`});
   // distribution
   const r18=C.filter(r=>r.holes==='18');const lo=Math.min(...r18.map(r=>r.score)),hi=Math.max(...r18.map(r=>r.score));const yr=daysAgo(365);
   const bins=[];for(let s=lo;s<=hi;s++){const recent=r18.filter(r=>r.score===s&&r.date>=yr).length,older=r18.filter(r=>r.score===s&&r.date<yr).length;bins.push({label:String(s),s,recent,older,v:recent+older})}
@@ -426,6 +437,18 @@ function drawCharts(){
     let o='';bins.forEach((b,i)=>{if(!b.recent)return;const x=L+i*bw+bw*.18,w=Math.max(2,bw*.64),h=b.recent/top*(H-T-B);o+=`<rect x="${x}" y="${H-B-h}" width="${w}" height="${h}" fill="var(--accent)"/>`});
     svg.insertAdjacentHTML('beforeend',o);svg.appendChild(svg.querySelector('.cross'))}
 }
+
+/* ---------- sheet helpers ---------- */
+function fitViewport(){const vv=window.visualViewport;const r=document.documentElement;
+  if(vv){r.style.setProperty('--vvh',vv.height+'px');const bg=document.querySelector('.sheet-bg');if(bg)bg.style.top=vv.offsetTop+'px'}}
+function onFieldFocus(e){if(!e.target.matches('.sheet input,.sheet select'))return;setTimeout(()=>{try{e.target.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},320)}
+function sheetOpened(){document.documentElement.classList.add('lockscroll');fitViewport();
+  if(window.visualViewport){visualViewport.addEventListener('resize',fitViewport);visualViewport.addEventListener('scroll',fitViewport)}
+  document.addEventListener('focusin',onFieldFocus)}
+function closeSheet(){$('#sheetHost').innerHTML='';document.documentElement.classList.remove('lockscroll');
+  if(window.visualViewport){visualViewport.removeEventListener('resize',fitViewport);visualViewport.removeEventListener('scroll',fitViewport)}
+  document.removeEventListener('focusin',onFieldFocus)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheetHost').innerHTML)closeSheet()});
 
 /* ---------- post / edit sheet ---------- */
 function openSheet(edit){
@@ -437,9 +460,10 @@ function openSheet(edit){
    <div class="grid2"><label for="f-date">Date<input id="f-date" type="date" value="${st.date}" required></label>
     <label for="f-holes">Holes<select id="f-holes"><option value="18">18 holes</option><option value="F9">Front 9</option><option value="B9">Back 9</option></select></label></div>
    <label for="f-search">Course<input id="f-search" type="search" placeholder="Search your saved courses" autocomplete="off" value="${esc(st.course)}"></label>
+   <div class="picked" id="picked" hidden></div>
    <div class="picker" id="picker" role="listbox" aria-label="Saved courses"></div>
-   <div class="grid3"><label for="f-tee">Tee<input id="f-tee" value="${esc(st.tee)}" placeholder="Blue"></label>
-    <label for="f-rating">Rating<input id="f-rating" type="number" inputmode="decimal" step="0.1" value="${st.rating}"></label>
+   <label for="f-tee">Tee<input id="f-tee" value="${esc(st.tee)}" placeholder="e.g. Blue"></label>
+   <div class="grid2"><label for="f-rating">Rating<input id="f-rating" type="number" inputmode="decimal" step="0.1" value="${st.rating}"></label>
     <label for="f-slope">Slope<input id="f-slope" type="number" inputmode="numeric" value="${st.slope}"></label></div>
    <label for="f-score">Adjusted gross score<input id="f-score" type="number" inputmode="numeric" value="${st.score}" placeholder="e.g. 86"></label>
    <p class="note">Use net double bogey as your max on any hole, same as GHIN. A new course and tee is saved automatically.</p>
@@ -459,13 +483,17 @@ function openSheet(edit){
     const base=S.rounds.filter(x=>x.id!==(r&&r.id));const now=computeAll(base),after=computeAll([...base,tmp]);
     const me=after.find(x=>x.id==='__p');const hiNow=[...now].reverse().find(x=>x.hiAfter!=null),hiAfter=[...after].reverse().find(x=>x.hiAfter!=null);
     $('#pv').innerHTML=`<div><span>Differential</span><b class="num">${fx(me.diff)}</b></div><div><span>Index now</span><b class="num">${hiStr(hiNow&&hiNow.hiAfter)}</b></div><div><span>Index after</span><b class="num">${hiStr(hiAfter&&hiAfter.hiAfter)}</b></div>`};
-  pick();preview();
-  $('#f-search').addEventListener('input',()=>{st.picked=null;pick()});
+  const showPicked=()=>{const on=!!st.picked;$('#picker').hidden=on;$('#picked').hidden=!on;
+    if(on)$('#picked').innerHTML=`<div>${esc($('#f-search').value)}<small>${esc($('#f-tee').value)} · ${fx(+$('#f-rating').value)} / ${$('#f-slope').value}</small></div><button type="button" class="linkbtn" id="chgCourse">Change</button>`};
+  pick();preview();showPicked();
+  $('#picked').addEventListener('click',e=>{if(e.target.closest('#chgCourse')){st.picked=null;showPicked();pick();$('#f-search').focus()}});
+  $('#f-search').addEventListener('input',()=>{st.picked=null;showPicked();pick()});
+  $('#f-search').addEventListener('focus',()=>{if(st.picked){st.picked=null;showPicked();pick()}});
   $('#f-holes').addEventListener('change',()=>{st.picked=null;pick();preview()});
   ['f-score','f-rating','f-slope','f-date'].forEach(id=>$('#'+id).addEventListener('input',preview));
   $('#picker').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(!b)return;const c=S.courses.find(x=>x.id===b.dataset.cid);
-    st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;pick();preview();$('#f-score').focus()});
-  const close=()=>host.innerHTML='';
+    st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;$('#f-search').blur();pick();showPicked();preview();$('#f-score').focus()});
+  const close=closeSheet;sheetOpened();
   $('#fcancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
   $('#pform').addEventListener('submit',async e=>{e.preventDefault();
     const v={date:$('#f-date').value,course:$('#f-search').value.trim(),tee:$('#f-tee').value.trim(),holes:$('#f-holes').value,score:+$('#f-score').value,rating:+$('#f-rating').value,slope:+$('#f-slope').value};
@@ -493,7 +521,7 @@ function openCourseSheet(id){
    <p class="note" id="cerr" style="color:var(--bad)" hidden></p>
    <div class="actions">${c?`<button class="btn danger" type="button" id="cdel">Remove</button><span style="flex:1"></span>`:''}<button class="btn ghost" type="button" id="ccancel">Cancel</button><button class="btn" type="submit">Save course</button></div></form></div>`;
   if(c)$('#c-holes').value=c.holes;
-  const close=()=>host.innerHTML='';$('#ccancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
+  const close=closeSheet;sheetOpened();$('#ccancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
   if(c)$('#cdel').onclick=async()=>{const b=$('#cdel');if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='Tap again to remove';return}
     try{await saveCourses(S.courses.filter(x=>x.id!==c.id));close();toast('Course removed')}catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}};
   $('#cform').addEventListener('submit',async e=>{e.preventDefault();
@@ -535,7 +563,7 @@ $('#main').addEventListener('click',async e=>{
   if(e.target.closest('#updBtn')){checkUpdate();return}
   const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
 });
-$('#main').addEventListener('keydown',e=>{const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
+$('#main').addEventListener('keydown',e=>{const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
 $('#main').addEventListener('input',e=>{if(e.target.id==='rq'){S.q=e.target.value;render()}if(e.target.id==='cq'){S.cq=e.target.value;render()}});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.tab==='overview')drawCharts()},150)});
 

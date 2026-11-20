@@ -92,7 +92,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line)}
 .tbl td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
-.tbl td.n,.tbl th.n{text-align:right;font-family:var(--display);font-size:16px;font-variant-numeric:tabular-nums}
+.tbl th.n{text-align:right}
+.tbl td.n,.tbl td.y{font-family:var(--display);font-size:16px;font-variant-numeric:tabular-nums}
+.tbl td.n{text-align:right}
 .scroll{overflow-x:auto}
 input,select{font:16px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
@@ -207,7 +209,7 @@ function attachTip(el,points,fmt,opts={}){ // points: [{x,y,...}] in px
   svg.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')hide()});
 }
 function niceTicks(min,max,count=4){const span=max-min||1;const step0=span/count;const mag=Math.pow(10,Math.floor(Math.log10(step0)));
-  const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=step0)||mag*10;const out=[];for(let v=Math.ceil(min/step)*step;v<=max+1e-9;v+=step)out.push(+v.toFixed(6));return out}
+  const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=step0)||mag*10;const out=[];const end=Math.ceil(max/step-1e-9)*step;for(let v=Math.floor(min/step+1e-9)*step;v<=end+1e-9;v+=step)out.push(+v.toFixed(6));return out}
 function timeChart(host,series,opt){
   // series: [{pts:[{t,v,...}], kind:'line'|'dots', cls}]
   const W=Math.max(280,host.clientWidth),H=opt.h||200,L=30,R=8,T=12,B=24;
@@ -237,7 +239,7 @@ function timeChart(host,series,opt){
   attachTip(host,tp,opt.fmt);
 }
 function barChart(host,items,opt){ // items [{label,v,tip}]
-  const W=Math.max(280,host.clientWidth),H=opt.h||170,L=26,R=6,T=16,B=22;
+  const W=Math.max(280,host.clientWidth),H=opt.h||170,L=26,R=6,T=opt.valueLabels?22:16,B=22;
   const vmax=Math.max(...items.map(i=>i.v),1);const ticks=niceTicks(0,vmax,3);const top=ticks[ticks.length-1];
   const bw=(W-L-R)/items.length,Y=v=>T+(1-v/top)*(H-T-B);
   let g='';ticks.forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-5}" y="${Y(v)+4}" text-anchor="end">${v}</text>`);
@@ -316,7 +318,7 @@ function mostPlayed(){const cs=courseStats().filter(c=>c.rounds.some(r=>r.holes=
    return `<div class="li"><div class="t">${esc(c.course)}<div class="m">Avg ${fx(avg(sc))} · best ${Math.min(...sc)} · avg diff ${fx(avg(r18.map(r=>r.diff)))}</div><div class="bar" style="width:${c.rounds.length/max*100}%"></div></div><div class="r num">${c.rounds.length}<small>rounds</small></div></div>`}).join('')}</div></section>`}
 function bestScores(){const b=S.calc.filter(r=>r.diff!=null).slice().sort((a,b)=>a.diff-b.diff).slice(0,20);if(!b.length)return'';
   return `<section class="card"><h2>Best 20 differentials</h2><div class="scroll"><table class="tbl"><thead><tr><th>Date</th><th>Course</th><th class="n">Score</th><th class="n">Diff</th></tr></thead><tbody>
-  ${b.map(r=>`<tr><td>${fmtD(r.date)}</td><td>${esc(r.course)}<div class="note">${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''}</div></td><td class="n">${r.score}</td><td class="n">${fx(r.diff)}</td></tr>`).join('')}</tbody></table></div></section>`}
+  ${b.map(r=>`<tr><td class="y">${fmtD(r.date)}</td><td>${esc(r.course)}<div class="note">${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''}</div></td><td class="n">${r.score}</td><td class="n">${fx(r.diff)}</td></tr>`).join('')}</tbody></table></div></section>`}
 
 function roundsView(){
   const rec=currentRecord(S.calc);const q=S.q.trim().toLowerCase();
@@ -368,7 +370,7 @@ function drawCharts(){
   const y0=Math.min(...[...ys.keys()].map(Number)),y1=Math.max(...[...ys.keys()].map(Number));const yi=[];
   for(let y=y0;y<=y1;y++){const rr=ys.get(String(y))||[];const r18=rr.filter(r=>r.holes==='18');yi.push({label:"'"+String(y).slice(2),y,v:roundsCount(rr),avg:avg(r18.map(r=>r.score)),ad:avg(rr.filter(r=>r.diff!=null).map(r=>r.diff)),low:r18.length?Math.min(...r18.map(r=>r.score)):null,vl:roundsCount(rr)})}
   const el3=$('#yearChart');if(el3)barChart(el3,yi,{h:170,label:'Rounds by year',valueLabels:true,fmt:p=>`<b>${p.y}</b> · ${p.v} rounds<br>Avg ${fx(p.avg)} · diff ${fx(p.ad)}`});
-  const yt=$('#yearTable');if(yt)yt.innerHTML=`<table class="tbl"><thead><tr><th>Year</th><th class="n">Rounds</th><th class="n">Avg</th><th class="n">Best</th><th class="n">Avg diff</th><th class="n">Year-end</th></tr></thead><tbody>${yi.slice().reverse().filter(y=>y.v).map(y=>{const ye=[...C].reverse().find(r=>r.date.slice(0,4)<=String(y.y)&&r.hiAfter!=null);return`<tr><td>${y.y}</td><td class="n">${y.v}</td><td class="n">${fx(y.avg)}</td><td class="n">${y.low??'—'}</td><td class="n">${fx(y.ad)}</td><td class="n">${hiStr(ye&&ye.hiAfter)}</td></tr>`}).join('')}</tbody></table>`;
+  const yt=$('#yearTable');if(yt)yt.innerHTML=`<table class="tbl"><thead><tr><th>Year</th><th class="n">Rounds</th><th class="n">Avg</th><th class="n">Best</th><th class="n">Avg diff</th><th class="n">Year-end</th></tr></thead><tbody>${yi.slice().reverse().filter(y=>y.v).map(y=>{const ye=[...C].reverse().find(r=>r.date.slice(0,4)<=String(y.y)&&r.hiAfter!=null);return`<tr><td class="y">${y.y}</td><td class="n">${y.v}</td><td class="n">${fx(y.avg)}</td><td class="n">${y.low??'—'}</td><td class="n">${fx(y.ad)}</td><td class="n">${hiStr(ye&&ye.hiAfter)}</td></tr>`}).join('')}</tbody></table>`;
   // months
   const ms=Array.from({length:12},()=>[]);d.forEach(r=>ms[+r.date.slice(5,7)-1].push(r.diff));
   const mn=['J','F','M','A','M','J','J','A','S','O','N','D'],mf=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

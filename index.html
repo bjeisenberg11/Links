@@ -70,7 +70,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;line-height:1.35;padding:6px 8px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);z-index:2}
 .tip[hidden]{display:none}
 /* score record: scorecard grid with circled counting scores */
-.record{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.record{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (min-width:560px){.record{grid-template-columns:repeat(5,1fr)}}
+.cell .c{font-size:11px;line-height:1.2;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;min-height:2.4em;padding:0 2px}
 .cell{border:1px solid var(--line);border-radius:8px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
 .cell .d{font:600 18px/1 var(--display);width:40px;height:30px;display:grid;place-items:center;border-radius:50%}
 .cell.count .d{border:2px solid var(--accent);color:var(--accent)}
@@ -119,7 +121,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .rowbtn{all:unset;display:contents;cursor:pointer}
 .expand{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;align-items:center}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
-@media (max-width:380px){.hero{grid-template-columns:1fr;justify-items:start}.record{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:380px){.hero{grid-template-columns:1fr;justify-items:start}.record{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head><body>
 
@@ -172,7 +174,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- state ---------- */
-const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
+const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtD=d=>{const [y,m,dd]=d.split('-');return `${+m}/${+dd}/${y.slice(2)}`};
@@ -289,6 +291,7 @@ function overview(){
     <p class="sub">Each dot is a round. The line is your rolling 20-round average.</p>
     <div class="chart" id="diffChart"></div>
     <div class="legend"><span><i style="background:var(--accent);opacity:.45"></i>Round</span><span><i style="background:var(--ink);border-radius:2px;height:3px;vertical-align:3px"></i>20-round average</span></div></section>
+  ${slopeCard()}
   <section class="card"><h2>Rounds by year</h2><p class="sub">Tap a bar for that year's average score and differential.</p><div class="chart" id="yearChart"></div><div id="yearTable" class="scroll"></div></section>
   <section class="card"><h2>By month of the season</h2><p class="sub">Average differential by calendar month, all years. Lower is better.</p><div class="chart" id="monthChart"></div></section>
   <section class="card"><h2>Score distribution</h2><p class="sub">18-hole gross scores, last 12 months vs. all time.</p><div class="chart" id="distChart"></div>
@@ -297,9 +300,40 @@ function overview(){
   ${bestScores()}`;
 }
 function seg(key){const v=S[key];return `<div class="seg" data-seg="${key}">${['1y','3y','all'].map(o=>`<button type="button" aria-pressed="${v===o}" data-v="${o}">${o==='all'?'All':o.toUpperCase()}</button>`).join('')}</div>`}
+function shortCourse(n){
+  const tc=s=>s===s.toUpperCase()?s.toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase()):s;
+  const clean=s=>tc(s.trim()).replace(/,\s*The$/i,'').replace(/^The\s+/i,'').replace(/\s+(Golf\s*(&|and)\s*(Country Club|CC)|Country Club|Golf Club|Golf Course|Golf Links|Golf Resort|Resort Golf|GC|CC)$/i,'').trim();
+  const parts=n.split(' - ').map(clean);const base=parts[0];const rest=parts.slice(1).filter(p=>p.toLowerCase()!==base.toLowerCase());
+  let s=base;if(rest.length){const p=rest[rest.length-1];s=p.split(/\s+/).length<=2?base+' '+p:p}
+  return s.length>34?s.slice(0,33)+'…':s}
+const SLOPE_BINS=[{lo:0,hi:125,label:'Under 126',short:'<126'},{lo:126,hi:131,label:'126–131',short:'126–131'},{lo:132,hi:137,label:'132–137',short:'132–137'},{lo:138,hi:999,label:'138 and up',short:'138+'}];
+function slopeData(){const rs=rangeStart(S.slopeRange);const rr=S.calc.filter(r=>r.diff!=null&&r.date>=rs);
+  const all=avg(rr.map(r=>r.diff));
+  const bins=SLOPE_BINS.map(b=>{const x=rr.filter(r=>r.slope>=b.lo&&r.slope<=b.hi);const s18=x.filter(r=>r.holes==='18');
+    return{...b,n:x.length,ad:avg(x.map(r=>r.diff)),as:avg(s18.map(r=>r.score)),over:avg(s18.map(r=>r.score-r.rating)),best:x.length?Math.min(...x.map(r=>r.diff)):null}});
+  return{rr,all,bins}}
+function slopeCard(){const {rr,all,bins}=slopeData();if(rr.length<8)return'';
+  const usable=bins.filter(b=>b.n>=4);let concl='';
+  if(usable.length>=2){const e=usable[0],h=usable[usable.length-1],gap=r1(h.ad-e.ad);
+    const best=usable.reduce((a,b)=>b.ad<a.ad?b:a);
+    concl=gap>=1?`On the hardest courses (slope ${esc(h.label)}) your differentials run <b>${fx(gap)}</b> higher than on the easiest (${esc(e.label)}). Slope isn't fully covering how much tougher those courses play for you.`
+      :gap<=-1?`You play <b>${fx(-gap)}</b> better relative to the rating on the hardest courses (slope ${esc(h.label)}) than on the easiest (${esc(e.label)}). Tough courses don't rattle you; easy ones may be costing focus.`
+      :`Your differentials barely move with difficulty (a ${fx(Math.abs(gap))} stroke gap from easiest to hardest). Slope is pricing courses fairly for your game.`;
+    concl+=` Your best bucket is <b>${esc(best.label)}</b> at ${fx(best.ad)}.`}
+  return `<section class="card"><div class="row-head"><h2>Course difficulty</h2>${seg('slopeRange')}</div>
+   <p class="sub">Average differential by slope. Differentials already adjust for difficulty, so a flat chart means slope rates courses fairly for you. Lower is better.</p>
+   <div class="chart" id="slopeChart"></div>
+   ${concl?`<div class="callout">${concl}</div>`:''}
+   <div class="scroll"><table class="tbl"><thead><tr><th>Slope</th><th class="n">Rounds</th><th class="n">Avg score</th><th class="n">Over rating</th><th class="n">Avg diff</th><th class="n">Best</th></tr></thead><tbody>
+   ${bins.map(b=>`<tr><td class="y">${b.label}</td><td class="n">${b.n}</td><td class="n">${fx(b.as)}</td><td class="n">${b.over==null?'—':'+'+fx(b.over)}</td><td class="n">${fx(b.ad)}</td><td class="n">${fx(b.best)}</td></tr>`).join('')}
+   </tbody></table></div>
+   <p class="note">"Over rating" is your average 18-hole score minus the course rating. Rounds with fewer than 4 in a bucket are left out of the conclusion.</p></section>`}
+function drawSlope(){const el=$('#slopeChart');if(!el)return;const {all,bins}=slopeData();
+  barChart(el,bins.map(b=>({label:b.short,v:b.ad||0,n:b.n,b,vl:b.n?fx(b.ad):'',color:b.n>=4&&b.ad<=all?'var(--accent)':'var(--faint)'})),
+   {h:170,label:'Average differential by slope',valueLabels:true,fmt:p=>p.n?`<b>Slope ${esc(p.b.label)}</b><br>Avg diff ${fx(p.v)} · ${p.n} rounds`:`<b>Slope ${esc(p.b.label)}</b> · no rounds`})}
 function recordCard(rec,hi){
   if(!rec.pool.length)return'';
-  const cells=rec.pool.slice().reverse().map((o,i)=>`<div class="cell ${rec.counting.has(o.id)?'count':''} ${i===rec.pool.length-1&&rec.pool.length===20?'old':''}" title="${esc(o.course)}"><span class="d num">${fx(o.diff+o.adj)}</span><small>${fmtD(o.date)}</small></div>`).join('');
+  const cells=rec.pool.slice().reverse().map((o,i)=>`<div class="cell ${rec.counting.has(o.id)?'count':''} ${i===rec.pool.length-1&&rec.pool.length===20?'old':''}" title="${esc(o.course)}"><span class="d num">${fx(o.diff+o.adj)}</span><span class="c">${esc(shortCourse(o.course))}</span><small>${o.score} · ${fmtD(o.date)}</small></div>`).join('');
   const oldest=rec.pool.length===20?rec.pool[0]:null;
   const home=topTee();let need='';
   if(rec.threshold!=null&&home){const sc=Math.floor(rec.threshold*home.slope/113+home.rating);need=`<div class="callout">To make your best ${rec.k}, post a differential of <b>${fx(rec.threshold)}</b> or lower. At ${esc(home.course)} (${esc(home.tee)}) that's <b>${sc}</b> or better.</div>`}
@@ -365,6 +399,7 @@ function drawCharts(){
   const dp=d.filter(x=>x.date>=rs).map(x=>({t:T(x.date),v:x.diff,r:x,r_:3}));
   const el2=$('#diffChart');if(el2)timeChart(el2,[{pts:dp.map(p=>({...p,rad:3.2,fill:'color-mix(in srgb, var(--accent) 45%, transparent)'})),kind:'dots',color:'var(--accent)'},{pts:roll.filter(p=>p.r.date>=rs),kind:'line',color:'var(--ink)',w:2}],
     {h:210,label:'Score differentials',tipSeries:{pts:dp},fmt:p=>`<b>${fx(p.v)}</b> · ${p.r.score} at ${esc(p.r.course.slice(0,28))}<br>${fmtD(p.r.date)} · ${esc(p.r.tee)}`});
+  drawSlope();
   // years
   const ys=new Map();C.forEach(r=>{const y=r.date.slice(0,4);if(!ys.has(y))ys.set(y,[]);ys.get(y).push(r)});
   const y0=Math.min(...[...ys.keys()].map(Number)),y1=Math.max(...[...ys.keys()].map(Number));const yi=[];

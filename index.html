@@ -120,6 +120,16 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.chbig{display:flex;align-items:center;gap:16px;background:var(--soft);border-radius:12px;padding:14px 16px}
+.chbig b{font:700 52px/1 var(--display);color:var(--accent);min-width:64px;text-align:center}
+.chbig div{font-size:14px;color:var(--muted)}.chbig strong{display:block;color:var(--ink);font-size:16px}
+.segw{display:flex;background:var(--line);border-radius:10px;padding:3px;gap:3px}
+.segw button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px var(--body);padding:9px 4px;border-radius:8px;cursor:pointer}
+.segw button[aria-pressed="true"]{background:var(--surface);color:var(--ink)}
+.segw button:disabled{opacity:.35;cursor:default}
+.rules{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.rules div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:6px}
+.rules div:first-child{border-top:0;padding-top:0}.rules span{color:var(--muted)}.rules b{text-align:right}
 .lede{margin:0;font:600 19px/1.3 var(--display);letter-spacing:.005em;text-wrap:balance}
 .insights{display:flex;flex-direction:column}
 .ins{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
@@ -213,7 +223,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.7';   // bump on every change so Check for update can see it
+const VERSION = '1.8';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -331,6 +341,7 @@ function overview(){
         <div><small>Change, 12 mo</small>${chg==null?'<strong>—</strong>':`<span class="pill ${chg>0?'up':''}">${chg>0?'▲ +':chg<0?'▼ ':''}${Math.abs(chg).toFixed(1)}${chg<0?' better':chg>0?' higher':''}</span>`}</div>
       </div>
     </div>
+    <button class="btn ghost" type="button" id="calcBtn">Course handicap calculator</button>
   </section>
   <section class="card"><h2>Rounds posted</h2>
     <div class="tiles"><div class="tile"><b class="num">${fx(ytd)}</b><small>YTD</small></div><div class="tile"><b class="num">${fx(m12)}</b><small>Last 12 mo</small></div><div class="tile"><b class="num">${fx(all)}</b><small>All rounds</small></div></div>
@@ -500,6 +511,68 @@ function closeSheet(){$('#sheetHost').innerHTML='';document.documentElement.clas
   document.removeEventListener('focusin',onFieldFocus)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheetHost').innerHTML)closeSheet()});
 
+/* ---------- course handicap ---------- */
+function currentHI(){const l=[...S.calc].reverse().find(x=>x.hiAfter!=null);return l?l.hiAfter:null}
+function chStr(ch){return ch==null?'—':ch<0?'+'+(-ch):String(ch)}
+function courseHcp(hi,c,mode){if(hi==null||!c)return{ch:null};
+  const nine=c.holes!=='18'||mode!=='18';let rating=+c.rating,par=+(c.par||(c.holes==='18'?72:36)),est=false;
+  if(c.holes==='18'&&nine){rating=rating/2;par=par/2;est=true}
+  const raw=(nine?hi/2:hi)*c.slope/113+(rating-par);return{ch:Math.round(raw),raw,nine,est,parSet:!!c.par,rating,par}}
+function strokeRules(ch,nine){const n=nine?9:18,lbl=nine?'on this nine':'';
+  if(ch==null)return[];
+  if(ch===0)return[['Strokes','None. You play this course at scratch.'],['Max hole score','Par + 2 on every hole']];
+  if(ch<0)return[['Strokes',`Plus handicap: give back ${-ch} stroke${ch<-1?'s':''} on the ${-ch} easiest hole${ch<-1?'s':''} ${lbl}`.trim()],['Max hole score',`Par + 1 on those hole${ch<-1?'s':''}, par + 2 elsewhere`]];
+  if(nine){if(ch<=9)return[['Strokes',`1 stroke on the ${ch} hardest hole${ch>1?'s':''} on this nine`],['Max hole score',`Par + 3 on those, par + 2 on the rest`]];
+    return[['Strokes',`2 strokes on the ${ch-9} hardest, 1 on the other ${18-ch}`],['Max hole score','Par + 4 where you get 2, par + 3 elsewhere']]}
+  if(ch<=18)return[['Strokes',`1 stroke on SI 1–${ch}`],['Max hole score',ch===18?'Par + 3 on every hole':`SI 1–${ch}: par + 3 · SI ${ch+1}–18: par + 2`]];
+  return[['Strokes',`2 strokes on SI 1–${ch-18}, 1 on SI ${ch-17}–18`],['Max hole score',`SI 1–${ch-18}: par + 4 · SI ${ch-17}–18: par + 3`]]}
+function openCalc(id){
+  const st={c:id?S.courses.find(x=>x.id===id):null,mode:'18',hi:currentHI()};
+  if(st.c&&st.c.holes!=='18')st.mode='F9';
+  $('#sheetHost').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-label="Course handicap"><div class="grab" aria-hidden="true"></div>
+   <div class="row-head"><h3>Course handicap</h3><button class="linkbtn" type="button" id="dclose">Close</button></div>
+   <div class="chips" id="k-recent"></div>
+   <label for="k-search">Course<input id="k-search" type="search" placeholder="Search your saved courses" autocomplete="off"></label>
+   <div class="picked" id="k-picked" hidden></div>
+   <div class="picker" id="k-picker" role="listbox" aria-label="Saved courses"></div>
+   <div class="segw" id="k-mode"><button type="button" data-m="F9">Front 9</button><button type="button" data-m="18">18 holes</button><button type="button" data-m="B9">Back 9</button></div>
+   <div class="grid2"><label for="k-hi">Handicap index<input id="k-hi" type="number" inputmode="decimal" step="0.1" value="${st.hi??''}"></label>
+    <label for="k-par">Par<input id="k-par" type="number" inputmode="numeric"></label></div>
+   <div id="k-out"></div></div></div>`;
+  sheetOpened();
+  const counts=new Map();S.rounds.forEach(x=>{const k=courseKey(x.course,x.tee,x.holes);counts.set(k,(counts.get(k)||0)+1)});
+  const cnt=c=>counts.get(courseKey(c.course,c.tee,c.holes))||0;
+  const recent=()=>{const seen=new Set(),out=[];for(const x of sortRounds(S.rounds).reverse()){const k=courseKey(x.course,x.tee,x.holes);if(seen.has(k))continue;seen.add(k);const c=S.courses.find(cc=>courseKey(cc.course,cc.tee,cc.holes)===k);if(c)out.push(c);if(out.length>=5)break}
+    $('#k-recent').innerHTML=out.map(c=>`<button type="button" class="chip" data-cid="${c.id}">${esc(shortCourse(c.course))}<small>${esc(c.tee)}</small></button>`).join('');$('#k-recent').hidden=!!st.c||!out.length};
+  const pick=()=>{const q=$('#k-search').value.trim().toLowerCase();
+    const list=S.courses.filter(c=>!q||c.course.toLowerCase().includes(q)||c.tee.toLowerCase().includes(q)).sort((a,b)=>cnt(b)-cnt(a)).slice(0,40);
+    $('#k-picker').innerHTML=list.map(c=>`<button type="button" role="option" data-cid="${c.id}">${esc(c.course)}<br><small>${esc(c.tee)} · ${c.holes==='18'?'18':'9'} holes · ${fx(+c.rating)} / ${c.slope}</small></button>`).join('')||'<p class="note" style="padding:10px 12px">No saved match. Add the course on the Courses tab.</p>';
+    $('#k-picker').hidden=!!st.c;$('#k-picked').hidden=!st.c;
+    if(st.c)$('#k-picked').innerHTML=`<div>${esc(st.c.course)}<small>${esc(st.c.tee)} · ${fx(+st.c.rating)} / ${st.c.slope}</small></div><button type="button" class="linkbtn" id="k-chg">Change</button>`};
+  const out=()=>{const c=st.c;
+    $('#k-mode').querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.m===st.mode);b.disabled=!!c&&c.holes!=='18'&&b.dataset.m==='18'});
+    if(!c){$('#k-par').value='';$('#k-out').innerHTML='<p class="note">Pick a course and tee to see your course handicap.</p>';return}
+    const full=c.par||(c.holes==='18'?72:36);if(document.activeElement!==$('#k-par'))$('#k-par').value=st.mode!=='18'&&c.holes==='18'?full/2:full;
+    const hi=$('#k-hi').value===''?null:+$('#k-hi').value;const r=courseHcp(hi,c,st.mode);
+    if(r.ch==null){$('#k-out').innerHTML='<p class="note">Enter a handicap index.</p>';return}
+    const rules=strokeRules(r.ch,r.nine);
+    $('#k-out').innerHTML=`<div class="chbig"><b class="num">${chStr(r.ch)}</b><div><strong>Course handicap</strong>${esc(shortCourse(c.course))}, ${esc(c.tee)}${r.nine?` · ${st.mode==='B9'?'back':'front'} 9`:''}<br>Index ${hiStr(hi)} × ${c.slope}/113 + (${fx(r.rating)} − ${r.par})</div></div>
+     <div class="rules">${rules.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
+     ${r.est?'<p class="note">This nine is estimated from the 18-hole rating, since nine-hole ratings aren’t saved for this tee.</p>':''}
+     ${!r.parSet?`<p class="note">Par isn't saved for this tee, so ${c.holes==='18'?72:36} is assumed. Change it above and it's saved to the course.</p>`:''}`};
+  const choose=cid=>{st.c=S.courses.find(x=>x.id===cid);if(st.c&&st.c.holes!=='18'&&st.mode==='18')st.mode='F9';$('#k-search').value='';$('#k-search').blur();pick();recent();out()};
+  $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
+    const b=e.target.closest('[data-cid]');if(b){choose(b.dataset.cid);return}
+    if(e.target.closest('#k-chg')){st.c=null;pick();recent();out();$('#k-search').focus();return}
+    const m=e.target.closest('[data-m]');if(m&&!m.disabled){st.mode=m.dataset.m;out()}});
+  $('#k-search').addEventListener('input',()=>{st.c=null;pick();recent();out()});
+  $('#k-hi').addEventListener('input',out);
+  $('#k-par').addEventListener('change',async()=>{const c=st.c;const v=+$('#k-par').value;if(!c||!v)return;
+    const full=st.mode!=='18'&&c.holes==='18'?v*2:v;if(full===c.par)return;
+    const upd={...c,par:full};st.c=upd;out();try{await saveCourses(S.courses.map(x=>x.id===c.id?upd:x));toast('Par saved')}catch(ex){toast(saveErr(ex))}});
+  pick();recent();out();
+}
+
 /* ---------- drill-down sheets ---------- */
 function roundRows(list){return list.map(r=>`<div class="li tap" data-rid-edit="${r.id}" role="button" tabindex="0"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}</div></div><div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div></div>`).join('')}
 function statBlock(list){const d=list.filter(r=>r.diff!=null),s18=list.filter(r=>r.holes==='18');
@@ -515,7 +588,8 @@ function openDrill(title,sub,list,extra=''){
   sheetOpened();
   $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
     const r=e.target.closest('[data-rid-edit]');if(r){closeSheet();openSheet(r.dataset.ridEdit);return}
-    const c=e.target.closest('[data-cedit]');if(c){closeSheet();openCourseSheet(c.dataset.cedit)}});
+    const c=e.target.closest('[data-cedit]');if(c){closeSheet();openCourseSheet(c.dataset.cedit);return}
+    const k=e.target.closest('[data-calc]');if(k){closeSheet();openCalc(k.dataset.calc)}});
   const el=$('#drillChart');if(el){const T=d=>Date.parse(d+'T12:00:00Z');const pts=sortRounds(list).filter(r=>r.diff!=null).map(r=>({t:T(r.date),v:r.diff,r}));
     timeChart(el,[{pts,kind:'line',color:'var(--faint)',w:1.5},{pts,kind:'dots',color:'var(--accent)'}],{h:150,label:'Differentials',fmt:p=>`<b>${fx(p.v)}</b> · ${p.r.score}<br>${fmtD(p.r.date)} · ${esc(p.r.tee)}`})}
 }
@@ -527,7 +601,7 @@ function drill(key){const [kind,...rest]=key.split(':');const val=rest.join(':')
     const tees=S.courses.filter(c=>c.course===name);const play=t=>list.filter(r=>courseKey(r.course,r.tee,r.holes)===courseKey(t.course,t.tee,t.holes));
     const all=avg(S.calc.filter(r=>r.diff!=null).map(r=>r.diff)),here=avg(list.filter(r=>r.diff!=null).map(r=>r.diff));
     const vs=here!=null&&list.length>=3?`<p class="sub">You average ${fx(here)} here vs. ${fx(all)} overall, so you play <b>${fx(Math.abs(here-all))} strokes ${here<=all?'better':'worse'}</b> than usual relative to the rating.</p>`:'';
-    const teeHtml=tees.length?`<div class="teelist">${tees.map(t=>`<div class="teerow"><div>${esc(t.tee)} · ${t.holes==='18'?'18':'9'} holes<small>${fx(t.rating)} / ${t.slope} · ${play(t).length} played</small></div><button class="linkbtn" type="button" data-cedit="${t.id}">Edit</button></div>`).join('')}</div>`:'';
+    const teeHtml=tees.length?`<div class="teelist">${tees.map(t=>`<div class="teerow"><div>${esc(t.tee)} · ${t.holes==='18'?'18':'9'} holes<small>${fx(t.rating)} / ${t.slope} · ${play(t).length} played</small></div><span style="display:flex;gap:12px"><button class="linkbtn" type="button" data-calc="${t.id}">HCP ${chStr(courseHcp(currentHI(),t,t.holes==='18'?'18':'F9').ch)}</button><button class="linkbtn" type="button" data-cedit="${t.id}">Edit</button></span></div>`).join('')}</div>`:'';
     openDrill(name,'',list,vs+teeHtml)}
 }
 
@@ -607,6 +681,7 @@ function openCourseSheet(id){
    <label for="c-name">Course<input id="c-name" value="${esc(c?c.course:'')}"></label>
    <div class="grid2"><label for="c-tee">Tee<input id="c-tee" value="${esc(c?c.tee:'')}"></label><label for="c-holes">Holes<select id="c-holes"><option value="18">18</option><option value="9">9</option></select></label></div>
    <div class="grid2"><label for="c-rating">Rating<input id="c-rating" type="number" step="0.1" inputmode="decimal" value="${c?c.rating:''}"></label><label for="c-slope">Slope<input id="c-slope" type="number" inputmode="numeric" value="${c?c.slope:''}"></label></div>
+   <label for="c-par">Par<input id="c-par" type="number" inputmode="numeric" value="${c&&c.par?c.par:''}" placeholder="${c&&c.holes==='9'?'36':'72'}"></label>
    <p class="note">Changing rating or slope here affects future posts only. Rounds already posted keep their own numbers.</p>
    <p class="note" id="cerr" style="color:var(--bad)" hidden></p>
    <div class="actions">${c?`<button class="btn danger" type="button" id="cdel">Remove</button><span style="flex:1"></span>`:''}<button class="btn ghost" type="button" id="ccancel">Cancel</button><button class="btn" type="submit">Save course</button></div></form></div>`;
@@ -615,7 +690,7 @@ function openCourseSheet(id){
   if(c)$('#cdel').onclick=async()=>{const b=$('#cdel');if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='Tap again to remove';return}
     try{await saveCourses(S.courses.filter(x=>x.id!==c.id));close();toast('Course removed')}catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}};
   $('#cform').addEventListener('submit',async e=>{e.preventDefault();
-    const v={course:$('#c-name').value.trim(),tee:$('#c-tee').value.trim(),holes:$('#c-holes').value,rating:+$('#c-rating').value,slope:+$('#c-slope').value};
+    const v={course:$('#c-name').value.trim(),tee:$('#c-tee').value.trim(),holes:$('#c-holes').value,rating:+$('#c-rating').value,slope:+$('#c-slope').value};if(+$('#c-par').value)v.par=+$('#c-par').value;
     if(!v.course||!v.tee||!v.rating||!v.slope){$('#cerr').textContent='Fill in course, tee, rating and slope.';$('#cerr').hidden=false;return}
     try{await saveCourses(c?S.courses.map(x=>x.id===c.id?{...c,...v}:x):[...S.courses,{id:'c'+Date.now().toString(36),...v}]);close();toast('Course saved')}
     catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}});
@@ -653,6 +728,7 @@ $('#main').addEventListener('click',async e=>{
   const ce=e.target.closest('[data-cedit]');if(ce){openCourseSheet(ce.dataset.cedit);return}
   if(e.target.closest('#addCourse')){openCourseSheet(null);return}
   if(e.target.closest('#updBtn')){checkUpdate();return}
+  if(e.target.closest('#calcBtn')){openCalc(null);return}
   const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
 });
 $('#main').addEventListener('keydown',e=>{const dk=e.target.closest('[data-drill]');if(dk&&(e.key==='Enter'||e.key===' ')){e.preventDefault();drill(dk.dataset.drill);return}const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});

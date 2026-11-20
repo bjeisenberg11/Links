@@ -120,6 +120,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.libhead{padding:8px 12px 4px;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);background:var(--bg)}
+.libhead:first-child{border-top:0}
 .chbig{display:flex;align-items:center;gap:16px;background:var(--soft);border-radius:12px;padding:14px 16px}
 .chbig b{font:700 52px/1 var(--display);color:var(--accent);min-width:64px;text-align:center}
 .chbig div{font-size:14px;color:var(--muted)}.chbig strong{display:block;color:var(--ink);font-size:16px}
@@ -223,7 +225,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.8';   // bump on every change so Check for update can see it
+const VERSION = '1.9';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -308,6 +310,13 @@ function barChart(host,items,opt){ // items [{label,v,tip}]
 
 /* ---------- Claude insights (insights.json, written by Claude on request) ---------- */
 S.insights=null;
+S.library=[];
+fetch('library.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.tees)S.library=j.tees.map(t=>({...t,lib:true}))}).catch(()=>{});
+function findCourse(id){return S.courses.find(x=>x.id===id)||S.library.find(x=>x.id===id)||null}
+function libMatches(q,holes){if(!q||q.length<2)return[];const saved=new Set(S.courses.map(c=>courseKey(c.course,c.tee,c.holes)));
+  return S.library.filter(t=>(!holes||t.holes===holes)&&!saved.has(courseKey(t.course,t.tee,t.holes))&&(t.course.toLowerCase().includes(q)||t.location.toLowerCase().includes(q)||t.region.toLowerCase().includes(q)))}
+function libButtons(list,selKey){if(!list.length)return'';
+  return `<div class="libhead">Course library</div>`+list.slice(0,30).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${selKey===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope} · par ${c.par} · ${esc(c.location)}</small></button>`).join('')}
 fetch('insights.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{S.insights=j;if(S.ready.r&&S.tab==='overview')render()}).catch(()=>{});
 function insightsCard(){const I=S.insights;if(!I||!I.items)return'';
   const newer=S.rounds.length-(I.roundCount||0);
@@ -443,7 +452,7 @@ function coursesView(){
   const q=S.cq.trim().toLowerCase();
   const cs=S.courses.slice().filter(c=>!q||c.course.toLowerCase().includes(q)).sort((a,b)=>(play.get(courseKey(b.course,b.tee,b.holes))||[]).length-(play.get(courseKey(a.course,a.tee,a.holes))||[]).length||a.course.localeCompare(b.course));
   return `<section class="card"><div class="row-head"><label for="cq" style="flex:1">Search courses<input id="cq" type="search" placeholder="Course name" value="${esc(S.cq)}"></label></div>
-  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one for its rounds and to edit it. These fill in rating and slope when you post.</p></section>
+  <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one for its rounds and to edit it. These fill in rating and slope when you post.${S.library.length?` When you post or use the calculator, search also covers the course library: ${new Set(S.library.map(t=>t.course)).size} top Chicagoland and destination courses.`:''}</p></section>
   <section class="card"><div class="list">${cs.map(c=>{const ps=play.get(courseKey(c.course,c.tee,c.holes))||[];
    return `<div class="li tap" data-drill="course:${encodeURIComponent(c.course)}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
    <div class="r num">${ps.length}<small>played</small></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
@@ -518,14 +527,15 @@ function courseHcp(hi,c,mode){if(hi==null||!c)return{ch:null};
   const nine=c.holes!=='18'||mode!=='18';let rating=+c.rating,par=+(c.par||(c.holes==='18'?72:36)),est=false;
   if(c.holes==='18'&&nine){rating=rating/2;par=par/2;est=true}
   const raw=(nine?hi/2:hi)*c.slope/113+(rating-par);return{ch:Math.round(raw),raw,nine,est,parSet:!!c.par,rating,par}}
-function strokeRules(ch,nine){const n=nine?9:18,lbl=nine?'on this nine':'';
+function strokeRules(ch,nine){const lbl=nine?'on this nine':'';const si=(a,b)=>a===b?`SI ${a}`:`SI ${a}–${b}`;
   if(ch==null)return[];
   if(ch===0)return[['Strokes','None. You play this course at scratch.'],['Max hole score','Par + 2 on every hole']];
   if(ch<0)return[['Strokes',`Plus handicap: give back ${-ch} stroke${ch<-1?'s':''} on the ${-ch} easiest hole${ch<-1?'s':''} ${lbl}`.trim()],['Max hole score',`Par + 1 on those hole${ch<-1?'s':''}, par + 2 elsewhere`]];
-  if(nine){if(ch<=9)return[['Strokes',`1 stroke on the ${ch} hardest hole${ch>1?'s':''} on this nine`],['Max hole score',`Par + 3 on those, par + 2 on the rest`]];
+  if(nine){if(ch<=9)return[['Strokes',`1 stroke on the ${ch} hardest hole${ch>1?'s':''} on this nine`],['Max hole score',ch===9?'Par + 3 on every hole':`Par + 3 on those, par + 2 on the rest`]];
     return[['Strokes',`2 strokes on the ${ch-9} hardest, 1 on the other ${18-ch}`],['Max hole score','Par + 4 where you get 2, par + 3 elsewhere']]}
-  if(ch<=18)return[['Strokes',`1 stroke on SI 1–${ch}`],['Max hole score',ch===18?'Par + 3 on every hole':`SI 1–${ch}: par + 3 · SI ${ch+1}–18: par + 2`]];
-  return[['Strokes',`2 strokes on SI 1–${ch-18}, 1 on SI ${ch-17}–18`],['Max hole score',`SI 1–${ch-18}: par + 4 · SI ${ch-17}–18: par + 3`]]}
+  if(ch<=18)return[['Strokes',`1 stroke on ${si(1,ch)}`],['Max hole score',ch===18?'Par + 3 on every hole':`${si(1,ch)}: par + 3 · ${si(ch+1,18)}: par + 2`]];
+  if(ch>=36)return[['Strokes','2 strokes on every hole'],['Max hole score','Par + 4 on every hole']];
+  return[['Strokes',`2 strokes on ${si(1,ch-18)}, 1 on ${si(ch-17,18)}`],['Max hole score',`${si(1,ch-18)}: par + 4 · ${si(ch-17,18)}: par + 3`]]}
 function openCalc(id){
   const st={c:id?S.courses.find(x=>x.id===id):null,mode:'18',hi:currentHI()};
   if(st.c&&st.c.holes!=='18')st.mode='F9';
@@ -546,7 +556,8 @@ function openCalc(id){
     $('#k-recent').innerHTML=out.map(c=>`<button type="button" class="chip" data-cid="${c.id}">${esc(shortCourse(c.course))}<small>${esc(c.tee)}</small></button>`).join('');$('#k-recent').hidden=!!st.c||!out.length};
   const pick=()=>{const q=$('#k-search').value.trim().toLowerCase();
     const list=S.courses.filter(c=>!q||c.course.toLowerCase().includes(q)||c.tee.toLowerCase().includes(q)).sort((a,b)=>cnt(b)-cnt(a)).slice(0,40);
-    $('#k-picker').innerHTML=list.map(c=>`<button type="button" role="option" data-cid="${c.id}">${esc(c.course)}<br><small>${esc(c.tee)} · ${c.holes==='18'?'18':'9'} holes · ${fx(+c.rating)} / ${c.slope}</small></button>`).join('')||'<p class="note" style="padding:10px 12px">No saved match. Add the course on the Courses tab.</p>';
+    const lib=libMatches(q,null);
+    $('#k-picker').innerHTML=list.map(c=>`<button type="button" role="option" data-cid="${c.id}">${esc(c.course)}<br><small>${esc(c.tee)} · ${c.holes==='18'?'18':'9'} holes · ${fx(+c.rating)} / ${c.slope}</small></button>`).join('')+libButtons(lib,st.c&&courseKey(st.c.course,st.c.tee,st.c.holes))||'<p class="note" style="padding:10px 12px">No match in your courses or the library. Add the course on the Courses tab.</p>';
     $('#k-picker').hidden=!!st.c;$('#k-picked').hidden=!st.c;
     if(st.c)$('#k-picked').innerHTML=`<div>${esc(st.c.course)}<small>${esc(st.c.tee)} · ${fx(+st.c.rating)} / ${st.c.slope}</small></div><button type="button" class="linkbtn" id="k-chg">Change</button>`};
   const out=()=>{const c=st.c;
@@ -560,7 +571,7 @@ function openCalc(id){
      <div class="rules">${rules.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
      ${r.est?'<p class="note">This nine is estimated from the 18-hole rating, since nine-hole ratings aren’t saved for this tee.</p>':''}
      ${!r.parSet?`<p class="note">Par isn't saved for this tee, so ${c.holes==='18'?72:36} is assumed. Change it above and it's saved to the course.</p>`:''}`};
-  const choose=cid=>{st.c=S.courses.find(x=>x.id===cid);if(st.c&&st.c.holes!=='18'&&st.mode==='18')st.mode='F9';$('#k-search').value='';$('#k-search').blur();pick();recent();out()};
+  const choose=cid=>{st.c=findCourse(cid);if(st.c&&st.c.holes!=='18'&&st.mode==='18')st.mode='F9';$('#k-search').value='';$('#k-search').blur();pick();recent();out()};
   $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
     const b=e.target.closest('[data-cid]');if(b){choose(b.dataset.cid);return}
     if(e.target.closest('#k-chg')){st.c=null;pick();recent();out();$('#k-search').focus();return}
@@ -569,7 +580,7 @@ function openCalc(id){
   $('#k-hi').addEventListener('input',out);
   $('#k-par').addEventListener('change',async()=>{const c=st.c;const v=+$('#k-par').value;if(!c||!v)return;
     const full=st.mode!=='18'&&c.holes==='18'?v*2:v;if(full===c.par)return;
-    const upd={...c,par:full};st.c=upd;out();try{await saveCourses(S.courses.map(x=>x.id===c.id?upd:x));toast('Par saved')}catch(ex){toast(saveErr(ex))}});
+    const upd={...c,par:full};st.c=upd;out();if(c.lib)return;try{await saveCourses(S.courses.map(x=>x.id===c.id?upd:x));toast('Par saved')}catch(ex){toast(saveErr(ex))}});
   pick();recent();out();
 }
 
@@ -633,7 +644,8 @@ function openSheet(edit){
     const list=S.courses.filter(c=>c.holes===h&&(!q||c.course.toLowerCase().includes(q)||c.tee.toLowerCase().includes(q)));
     const counts=new Map();S.rounds.forEach(x=>{const k=courseKey(x.course,x.tee,x.holes);counts.set(k,(counts.get(k)||0)+1)});
     list.sort((a,b)=>(counts.get(courseKey(b.course,b.tee,b.holes))||0)-(counts.get(courseKey(a.course,a.tee,a.holes))||0));
-    $('#picker').innerHTML=list.slice(0,40).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${st.picked===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope}</small></button>`).join('')||`<p class="note" style="padding:10px 12px">No saved match. Type the course name, then fill in tee, rating and slope.</p>`};
+    const lib=libMatches(q,h);
+    $('#picker').innerHTML=(list.slice(0,40).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${st.picked===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope}</small></button>`).join('')+libButtons(lib,st.picked))||`<p class="note" style="padding:10px 12px">No match in your courses or the library. Type the course name, then fill in tee, rating and slope.</p>`};
   const preview=()=>{const sc=+$('#f-score').value,ra=+$('#f-rating').value,sl=+$('#f-slope').value,h=$('#f-holes').value;
     if(!sc||!ra||!sl){$('#pv').innerHTML='<span class="note">Enter score, rating and slope to preview the differential.</span>';return}
     const tmp={id:'__p',date:$('#f-date').value||todayStr(),course:$('#f-search').value,tee:$('#f-tee').value,holes:h,score:sc,rating:ra,slope:sl,seq:9,createdAt:Date.now()};
@@ -647,7 +659,7 @@ function openSheet(edit){
       const c=S.courses.find(cc=>courseKey(cc.course,cc.tee,cc.holes)===k);if(c&&c.holes===h9)out.push(c);if(out.length>=5)break}
     $('#recent').innerHTML=out.map(c=>`<button type="button" class="chip" data-cid="${c.id}">${esc(shortCourse(c.course))}<small>${esc(c.tee)}</small></button>`).join('');
     $('#recent').hidden=!!st.picked||!out.length};
-  const choose=id=>{const c=S.courses.find(x=>x.id===id);if(!c)return;
+  const choose=id=>{const c=findCourse(id);if(!c)return;st.lib=c.lib?c:null;
     st.picked=courseKey(c.course,c.tee,c.holes);$('#f-search').value=c.course;$('#f-tee').value=c.tee;$('#f-rating').value=c.rating;$('#f-slope').value=c.slope;$('#f-search').blur();pick();showPicked();recent();preview();$('#f-score').focus()};
   $('#recent').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(b)choose(b.dataset.cid)});
   pick();preview();showPicked();recent();
@@ -669,7 +681,7 @@ function openSheet(edit){
       const rec=r?{...r,...v}:{id:'r'+Date.now().toString(36),...v,seq:sameDay+1,createdAt:Date.now()};
       const rounds=r?S.rounds.map(x=>x.id===r.id?rec:x):[...S.rounds,rec];
       const k=courseKey(v.course,v.tee,v.holes);let courses=S.courses;
-      if(!courses.some(c=>courseKey(c.course,c.tee,c.holes)===k)){courses=[...courses,{id:'c'+Date.now().toString(36),course:v.course,tee:v.tee,holes:v.holes==='18'?'18':'9',rating:v.rating,slope:v.slope}]}
+      if(!courses.some(c=>courseKey(c.course,c.tee,c.holes)===k)){const lb=S.library.find(t=>courseKey(t.course,t.tee,t.holes)===k);const nc={id:'c'+Date.now().toString(36),course:v.course,tee:v.tee,holes:v.holes==='18'?'18':'9',rating:v.rating,slope:v.slope};if(lb&&lb.par)nc.par=v.holes==='18'?lb.par:lb.par/2;courses=[...courses,nc]}
       await saveRounds(rounds);if(courses!==S.courses)await saveCourses(courses);
       close();toast(r?'Round updated':'Round posted');
     }catch(ex){$('#ferr').textContent=saveErr(ex);$('#ferr').hidden=false;$('#fsave').disabled=false}

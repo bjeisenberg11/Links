@@ -1,0 +1,38 @@
+{
+  "generated": "2026-11-20",
+  "roundCount": 255,
+  "lastRound": "2026-10-25",
+  "headline": "2026 was your best season yet: every one of your counting scores came between June 30 and October 6.",
+  "items": [
+    {
+      "title": "You're breaking 85 far more often",
+      "text": "19% of your 2026 rounds were under 85, up from 8% in 2024 and 2025 and none in 2021-22. Rounds of 90+ fell from 96% in 2021 to 42% this year.",
+      "tab": "trends"
+    },
+    {
+      "title": "Fewer blow-ups, not just a lower average",
+      "text": "Rounds with a differential of 20+ dropped from 15 in 2021 to 3 this year. Your last 20 average 14.5 vs. 15.1 for the 20 before, and they're a little tighter too.",
+      "tab": "trends"
+    },
+    {
+      "title": "What moves your index next",
+      "text": "Your next round pushes out a 14.9 that isn't counting, so the index won't rise from that alone. To lower it you need a differential under 13.0, which is about an 84 at Heritage Oaks Classic 18.",
+      "tab": "overview"
+    },
+    {
+      "title": "Tiburon is your toughest track",
+      "text": "Since 2023 you play Tiburon Gold 3.6 strokes worse than your average and Tiburon Black 1.9 worse. Glencoe, Heritage Oaks and Steeple Chase are your best, 1.4 to 1.8 strokes better than usual.",
+      "tab": "courses"
+    },
+    {
+      "title": "Golf trips wear on you",
+      "text": "On back-to-back days your differential rises about 1 stroke on day 2 and about 2 on day 3 or later (smaller sample). Time off between rounds, by contrast, makes no real difference.",
+      "tab": "trends"
+    },
+    {
+      "title": "June and October are your weak months",
+      "text": "Since 2023 you average 16.4 in June and 16.6 in October vs. 14.4 to 14.6 in May and August. October includes most of your Tiburon rounds, which explains much of it.",
+      "tab": "trends"
+    }
+  ]
+}

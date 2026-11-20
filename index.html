@@ -32,6 +32,7 @@ html{color-scheme:light}@media (prefers-color-scheme: dark){html{color-scheme:da
 [hidden]{display:none!important}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+main{display:flex;flex-direction:column;gap:12px;min-width:0}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px;display:flex;flex-direction:column;gap:10px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
@@ -119,6 +120,14 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.lede{margin:0;font:600 19px/1.3 var(--display);letter-spacing:.005em;text-wrap:balance}
+.insights{display:flex;flex-direction:column}
+.ins{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.ins:first-child{border-top:0;padding-top:2px}
+.ins b{font-weight:600}.ins span{color:var(--muted)}
+.ins.tap{cursor:pointer}.ins.tap b::after{content:" ›";color:var(--accent)}
+.stale{color:var(--flag);font-weight:600}
+.tabs button{font-size:13px}
 .tbl tr.tap{cursor:pointer}.tbl tr.tap:active td,.li.tap:active{background:var(--soft)}
 .tbl tr.tap td:first-child{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:-6px auto 0;flex:none}
@@ -159,6 +168,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
     <div class="brand"><h1>Links</h1><button class="btn" id="postBtn" type="button">+ Post round</button></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-overview" aria-selected="true" data-tab="overview">Overview</button>
+      <button role="tab" id="tab-trends" aria-selected="false" data-tab="trends">Trends</button>
       <button role="tab" id="tab-rounds" aria-selected="false" data-tab="rounds">Rounds</button>
       <button role="tab" id="tab-courses" aria-selected="false" data-tab="courses">Courses</button>
     </div>
@@ -203,7 +213,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.5';   // bump on every change so Check for update can see it
+const VERSION = '1.6';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
@@ -286,6 +296,17 @@ function barChart(host,items,opt){ // items [{label,v,tip}]
   attachTip(host,items.map((it,i)=>({...it,x:L+i*bw+bw/2,y:Y(it.v)})),opt.fmt);
 }
 
+/* ---------- Claude insights (insights.json, written by Claude on request) ---------- */
+S.insights=null;
+fetch('insights.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{S.insights=j;if(S.ready.r&&S.tab==='overview')render()}).catch(()=>{});
+function insightsCard(){const I=S.insights;if(!I||!I.items)return'';
+  const newer=S.rounds.length-(I.roundCount||0);
+  const when=I.generated?fmtLong(I.generated):'';
+  return `<section class="card" aria-label="Claude's take"><div class="row-head"><h2>Claude's take</h2><span class="note">${esc(when)}</span></div>
+   ${I.headline?`<p class="lede">${esc(I.headline)}</p>`:''}
+   <div class="insights">${I.items.map(it=>`<div class="ins${it.tab?' tap':''}" ${it.tab?`data-goto="${esc(it.tab)}" role="button" tabindex="0"`:''}><b>${esc(it.title)}</b><span>${esc(it.text)}</span></div>`).join('')}</div>
+   <p class="note">${newer>0?`<span class="stale">${newer} new round${newer>1?'s':''} since this was written.</span> `:''}Written by Claude from ${I.roundCount} rounds through ${I.lastRound?fmtD(I.lastRound):'—'}. Ask Claude to “refresh Links insights” to update.</p></section>`}
+
 /* ---------- views ---------- */
 function overview(){
   const C=S.calc;if(!C.length)return `<div class="card empty">No rounds yet. Tap <b>+ Post round</b> to add your first one.</div>`;
@@ -311,6 +332,7 @@ function overview(){
       </div>
     </div>
   </section>
+  ${insightsCard()}
   <section class="card"><h2>Rounds posted</h2>
     <div class="tiles"><div class="tile"><b class="num">${fx(ytd)}</b><small>YTD</small></div><div class="tile"><b class="num">${fx(m12)}</b><small>Last 12 mo</small></div><div class="tile"><b class="num">${fx(all)}</b><small>All rounds</small></div></div>
     <p class="note">9-hole rounds count as half.</p>
@@ -319,6 +341,10 @@ function overview(){
     <p class="sub">Best ${hiStr(best&&best.hiAfter)} on ${best?fmtD(best.date):'—'} · flag marks your low point</p>
     <div class="chart" id="hiChart"></div></section>
   ${recordCard(rec,hi)}
+  `;
+}
+function trendsView(){if(!S.calc.length)return `<div class="card empty">No rounds yet.</div>`;
+  return `
   <section class="card"><div class="row-head"><h2>Score differentials</h2>${seg('diffRange')}</div>
     <p class="sub">Each dot is a round. The line is your rolling 20-round average.</p>
     <div class="chart" id="diffChart"></div>
@@ -417,8 +443,8 @@ function render(){
   if(!S.ready.r){return}
   const main=$('#main');
   const focusId=document.activeElement&&document.activeElement.id,sel=document.activeElement&&document.activeElement.selectionStart;
-  main.innerHTML=(S.tab==='overview'?overview():S.tab==='rounds'?roundsView():coursesView())+`<div class="foot"><span>Version ${VERSION}</span><button class="linkbtn" type="button" id="updBtn">Check for update</button></div>`;
-  if(S.tab==='overview')drawCharts();
+  main.innerHTML=(S.tab==='overview'?overview():S.tab==='trends'?trendsView():S.tab==='rounds'?roundsView():coursesView())+`<div class="foot"><span>Version ${VERSION}</span><button class="linkbtn" type="button" id="updBtn">Check for update</button></div>`;
+  if(S.tab==='overview'||S.tab==='trends')drawCharts();
   if(focusId&&document.getElementById(focusId)&&/^(rq|cq)$/.test(focusId)){const el=document.getElementById(focusId);el.focus();try{el.setSelectionRange(sel,sel)}catch(e){}}
 }
 function rangeStart(k){return k==='1y'?daysAgo(365):k==='3y'?daysAgo(365*3):'0000'}
@@ -620,6 +646,7 @@ $('#postBtn').addEventListener('click',()=>openSheet(null));
 $('#main').addEventListener('click',async e=>{
   const sg=e.target.closest('[data-seg] button');if(sg){S[sg.parentElement.dataset.seg]=sg.dataset.v;render();return}
   const dr=e.target.closest('[data-drill]');if(dr){drill(dr.dataset.drill);return}
+  const go=e.target.closest('[data-goto]');if(go){S.tab=go.dataset.goto;render();window.scrollTo({top:0});return}
   const ed=e.target.closest('[data-edit]');if(ed){openSheet(ed.dataset.edit);return}
   const dl=e.target.closest('[data-del]');if(dl){if(dl.dataset.arm!=='1'){dl.dataset.arm='1';dl.textContent='Tap again to delete';return}
     try{await saveRounds(S.rounds.filter(x=>x.id!==dl.dataset.del));S.expanded=null;render();toast('Round deleted')}catch(ex){toast(saveErr(ex))}return}
@@ -630,7 +657,7 @@ $('#main').addEventListener('click',async e=>{
 });
 $('#main').addEventListener('keydown',e=>{const dk=e.target.closest('[data-drill]');if(dk&&(e.key==='Enter'||e.key===' ')){e.preventDefault();drill(dk.dataset.drill);return}const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});
 $('#main').addEventListener('input',e=>{if(e.target.id==='rq'){S.q=e.target.value;render()}if(e.target.id==='cq'){S.cq=e.target.value;render()}});
-let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.tab==='overview')drawCharts()},150)});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.tab==='overview'||S.tab==='trends')drawCharts()},150)});
 
 /* ---------- boot ---------- */
 const firebaseConfig={apiKey:"AIzaSyABfymW7NTyjntVK_JqWhEHx9eREiWmkd8",authDomain:"links-8bda3.firebaseapp.com",projectId:"links-8bda3",storageBucket:"links-8bda3.firebasestorage.app",messagingSenderId:"650245638565",appId:"1:650245638565:web:e5e4275b10b9415e8e004c"};

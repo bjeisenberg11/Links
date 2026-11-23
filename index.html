@@ -28,13 +28,15 @@
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));font-size:15px;-webkit-text-size-adjust:100%}
-html{color-scheme:light}@media (prefers-color-scheme: dark){html{color-scheme:dark}}
+html{color-scheme:light}@media (prefers-color-scheme: dark){html:not([data-theme="light"]){color-scheme:dark}}html[data-theme="dark"]{color-scheme:dark}
 [hidden]{display:none!important}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 main{display:flex;flex-direction:column;gap:12px;min-width:0}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px;display:flex;flex-direction:column;gap:10px}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hdr-actions{display:flex;align-items:center;gap:8px}
+.iconbtn{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 .brand h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
 .btn{font:600 14px var(--body);border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
@@ -120,6 +122,19 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.setgroup{display:flex;flex-direction:column;gap:10px}
+.setgroup>h4{margin:6px 0 0;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px}
+.setgroup>label{font:400 15px var(--body);color:var(--ink);gap:6px}.setgroup>label small{display:block;font-size:12px;color:var(--muted);margin-top:-4px}
+.setrow>div{min-width:0}.setrow small{display:block;font-size:12px;color:var(--muted);line-height:1.35}
+.setrow .segw{flex:none;min-width:190px}
+.switch{position:relative;flex:none;width:50px;height:30px;border-radius:99px;border:0;background:var(--line);cursor:pointer;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.switch[aria-checked="true"]{background:var(--accent)}.switch[aria-checked="true"]::after{transform:translateX(20px)}
+.datagrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.datagrid div{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.datagrid b{display:block;font:700 20px/1.1 var(--display)}.datagrid small{font-size:12px;color:var(--muted)}
+@media (max-width:380px){.setrow{flex-wrap:wrap}.setrow .segw{min-width:0;width:100%}}
 .libhead{padding:8px 12px 4px;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);background:var(--bg)}
 .libhead:first-child{border-top:0}
 .chbig{display:flex;align-items:center;gap:16px;background:var(--soft);border-radius:12px;padding:14px 16px}
@@ -177,7 +192,7 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Links</h1><button class="btn" id="postBtn" type="button">+ Post round</button></div>
+    <div class="brand"><h1>Links</h1><div class="hdr-actions"><button class="iconbtn" id="setBtn" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button><button class="btn" id="postBtn" type="button">+ Post round</button></div></div>
     <div class="tabs" role="tablist">
       <button role="tab" id="tab-overview" aria-selected="true" data-tab="overview">Overview</button>
       <button role="tab" id="tab-trends" aria-selected="false" data-tab="trends">Trends</button>
@@ -225,10 +240,17 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.10';   // bump on every change so Check for update can see it
+const VERSION = '1.11';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
-const S={rounds:[],courses:[],calc:[],tab:'overview',range:'all',diffRange:'all',slopeRange:'3y',db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
+const PREF_DEFAULTS={theme:'system',holes:'18',range:'all',refTee:'auto',showInsights:true,library:true};
+function loadPrefs(){try{return{...PREF_DEFAULTS,...JSON.parse(localStorage.getItem('links.prefs')||'{}')}}catch(e){return{...PREF_DEFAULTS}}}
+const P=loadPrefs();
+function savePrefs(){try{localStorage.setItem('links.prefs',JSON.stringify(P))}catch(e){}}
+function applyTheme(){const r=document.documentElement;if(P.theme==='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',P.theme);
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{if(!m.dataset.orig)m.dataset.orig=m.content;m.content=P.theme==='light'?'#f2f4ef':P.theme==='dark'?'#0e1411':m.dataset.orig})}
+applyTheme();
+const S={rounds:[],courses:[],calc:[],tab:'overview',range:P.range,diffRange:P.range,slopeRange:P.range,lastSync:null,db:null,canWrite:true,expanded:null,q:'',cq:'',ready:{r:false,c:false},version:0};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtD=d=>{const [y,m,dd]=d.split('-');return `${+m}/${+dd}/${y.slice(2)}`};
@@ -313,12 +335,12 @@ S.insights=null;
 S.library=[];
 fetch('library.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.tees)S.library=j.tees.map(t=>({...t,lib:true}))}).catch(()=>{});
 function findCourse(id){return S.courses.find(x=>x.id===id)||S.library.find(x=>x.id===id)||null}
-function libMatches(q,holes){if(!q||q.length<2)return[];const saved=new Set(S.courses.map(c=>courseKey(c.course,c.tee,c.holes)));
+function libMatches(q,holes){if(!P.library||!q||q.length<2)return[];const saved=new Set(S.courses.map(c=>courseKey(c.course,c.tee,c.holes)));
   return S.library.filter(t=>(!holes||t.holes===holes)&&!saved.has(courseKey(t.course,t.tee,t.holes))&&(t.course.toLowerCase().includes(q)||t.location.toLowerCase().includes(q)||t.region.toLowerCase().includes(q)))}
 function libButtons(list,selKey){if(!list.length)return'';
   return `<div class="libhead">Course library</div>`+list.slice(0,30).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${selKey===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope} · par ${c.par} · ${esc(c.location)}</small></button>`).join('')}
 fetch('insights.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{S.insights=j;if(S.ready.r&&S.tab==='overview')render()}).catch(()=>{});
-function insightsCard(){const I=S.insights;if(!I||!I.items)return'';
+function insightsCard(){const I=S.insights;if(!P.showInsights||!I||!I.items)return'';
   const newer=S.rounds.length-(I.roundCount||0);
   const when=I.generated?fmtLong(I.generated):'';
   return `<section class="card" aria-label="Claude's take"><div class="row-head"><h2>Claude's take</h2><span class="note">${esc(when)}</span></div>
@@ -425,7 +447,7 @@ function recordCard(rec,hi){
    <div class="callouts">${need}${oldest?`<div class="callout">Next round pushes out <b>${fx(oldest.diff+oldest.adj)}</b> from ${fmtD(oldest.date)}${rec.counting.has(oldest.id)?', one of your counting scores':''}.</div>`:''}</div></section>`;
 }
 function courseStats(){const m=new Map();for(const r of S.calc){const k=r.course;if(!m.has(k))m.set(k,{course:k,rounds:[],tees:new Map()});const e=m.get(k);e.rounds.push(r);const tk=r.tee+'|'+r.holes;e.tees.set(tk,(e.tees.get(tk)||0)+1)}return[...m.values()]}
-function topTee(){const m=new Map();for(const r of S.calc.slice(-60)){if(r.holes!=='18')continue;const k=r.course+'|'+r.tee;m.set(k,(m.get(k)||{n:0,r}));m.get(k).n++}let b=null;for(const v of m.values())if(!b||v.n>b.n)b=v;return b?b.r:null}
+function topTee(){if(P.refTee!=='auto'){const c=S.courses.find(x=>x.id===P.refTee&&x.holes==='18');if(c)return c}const m=new Map();for(const r of S.calc.slice(-60)){if(r.holes!=='18')continue;const k=r.course+'|'+r.tee;m.set(k,(m.get(k)||{n:0,r}));m.get(k).n++}let b=null;for(const v of m.values())if(!b||v.n>b.n)b=v;return b?b.r:null}
 function mostPlayed(){const cs=courseStats().filter(c=>c.rounds.some(r=>r.holes==='18')).sort((a,b)=>b.rounds.length-a.rounds.length).slice(0,8);if(!cs.length)return'';
   const max=cs[0].rounds.length;
   return `<section class="card"><div class="row-head"><h2>Most played courses</h2><span class="note">${courseStats().length} courses total</span></div>
@@ -584,6 +606,47 @@ function openCalc(id){
   pick();recent();out();
 }
 
+/* ---------- settings ---------- */
+function ago(t){if(!t)return'not yet';const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' hr ago'}
+function openSettings(){
+  const seg=(key,opts)=>`<div class="segw" data-pref="${key}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${String(P[key])===v}">${l}</button>`).join('')}</div>`;
+  const sw=(key)=>`<button type="button" class="switch" role="switch" data-pref-bool="${key}" aria-checked="${!!P[key]}" aria-label="${key}"></button>`;
+  const tees=S.courses.filter(c=>c.holes==='18').map(c=>({c,n:S.rounds.filter(r=>courseKey(r.course,r.tee,r.holes)===courseKey(c.course,c.tee,c.holes)).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  const auto=(()=>{const p=P.refTee;P.refTee='auto';const t=topTee();P.refTee=p;return t})();
+  const sorted=sortRounds(S.rounds),libN=new Set(S.library.map(t=>t.course)).size,I=S.insights;
+  $('#sheetHost').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-label="Settings"><div class="grab" aria-hidden="true"></div>
+   <div class="row-head"><h3>Settings</h3><button class="linkbtn" type="button" id="dclose">Done</button></div>
+   <div class="setgroup"><h4>Appearance</h4>
+    <div class="setrow"><div>Theme</div>${seg('theme',[['system','Auto'],['light','Light'],['dark','Dark']])}</div></div>
+   <div class="setgroup"><h4>Defaults</h4>
+    <div class="setrow"><div>Holes when posting</div>${seg('holes',[['F9','Front 9'],['18','18'],['B9','Back 9']])}</div>
+    <div class="setrow"><div>Chart range<small>Starting range for history, differentials and difficulty</small></div>${seg('range',[['1y','1Y'],['3y','3Y'],['all','All']])}</div>
+    <label for="set-ref">Reference tee<small>Used for "score needed to count" on Overview</small>
+     <select id="set-ref"><option value="auto">Auto: most played recently${auto?` (${esc(shortCourse(auto.course))}, ${esc(auto.tee)})`:''}</option>${tees.map(({c,n})=>`<option value="${c.id}" ${P.refTee===c.id?'selected':''}>${esc(shortCourse(c.course))} · ${esc(c.tee)} (${n})</option>`).join('')}</select></label></div>
+   <div class="setgroup"><h4>Features</h4>
+    <div class="setrow"><div>Claude's take<small>Insights card at the end of Overview</small></div>${sw('showInsights')}</div>
+    <div class="setrow"><div>Course library in search<small>${libN} top Chicagoland and destination courses</small></div>${sw('library')}</div></div>
+   <div class="setgroup"><h4>Your data</h4>
+    <div class="datagrid"><div><b class="num">${S.rounds.length}</b><small>Rounds</small></div><div><b class="num">${S.courses.length}</b><small>Saved course tees</small></div>
+     <div><b class="num">${sorted.length?fmtD(sorted[0].date):'—'}</b><small>First round</small></div><div><b class="num">${sorted.length?fmtD(sorted[sorted.length-1].date):'—'}</b><small>Latest round</small></div></div>
+    <p class="note">${navigator.onLine===false?'Offline. Reconnect to sync.':`Synced with the cloud ${ago(S.lastSync)}.`} Stored in your Links Firebase project, so it's the same on any device.</p></div>
+   <div class="setgroup"><h4>Claude's take</h4>
+    <p class="note" style="margin:0">Claude rewrites it every Sunday at 7:39 pm when you've posted new rounds.${I&&I.generated?` Last written ${fmtLong(I.generated)} from ${I.roundCount} rounds.`:''}</p></div>
+   <div class="setgroup"><h4>About</h4>
+    <div class="setrow"><div>Links ${VERSION}<small>Handicap math follows the World Handicap System</small></div><button class="btn ghost" type="button" id="setUpd">Check for update</button></div>
+    <button class="linkbtn" type="button" id="setReset" style="align-self:flex-start">Reset these settings</button>
+    <p class="note" style="margin:0">Settings are saved on this device.</p></div>
+  </div></div>`;
+  sheetOpened();
+  const after=key=>{savePrefs();if(key==='theme')applyTheme();if(key==='range'){S.range=S.diffRange=S.slopeRange=P.range}render()};
+  $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
+    const b=e.target.closest('[data-pref] button');if(b){const k=b.parentElement.dataset.pref;P[k]=b.dataset.v;b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));after(k);return}
+    const s=e.target.closest('[data-pref-bool]');if(s){const k=s.dataset.prefBool;P[k]=!P[k];s.setAttribute('aria-checked',P[k]);after(k);return}
+    if(e.target.closest('#setUpd')){checkUpdate();return}
+    if(e.target.closest('#setReset')){Object.assign(P,PREF_DEFAULTS);savePrefs();applyTheme();S.range=S.diffRange=S.slopeRange=P.range;render();openSettings();toast('Settings reset')}});
+  $('#set-ref').addEventListener('change',e=>{P.refTee=e.target.value;after('refTee')});
+}
+
 /* ---------- drill-down sheets ---------- */
 function roundRows(list){return list.map(r=>`<div class="li tap" data-rid-edit="${r.id}" role="button" tabindex="0"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}</div></div><div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div></div>`).join('')}
 function statBlock(list){const d=list.filter(r=>r.diff!=null),s18=list.filter(r=>r.holes==='18');
@@ -619,7 +682,7 @@ function drill(key){const [kind,...rest]=key.split(':');const val=rest.join(':')
 /* ---------- post / edit sheet ---------- */
 function openSheet(edit){
   const r=edit?S.rounds.find(x=>x.id===edit):null;
-  const st={course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:'18',rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
+  const st={course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:P.holes,rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
   const host=$('#sheetHost');
   host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="pform" novalidate>
    <div class="grab" aria-hidden="true"></div>
@@ -730,6 +793,7 @@ async function checkUpdate(){
 /* ---------- events ---------- */
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;S.expanded=null;render();window.scrollTo({top:0})});
 $('#postBtn').addEventListener('click',()=>openSheet(null));
+$('#setBtn').addEventListener('click',openSettings);
 $('#main').addEventListener('click',async e=>{
   const sg=e.target.closest('[data-seg] button');if(sg){S[sg.parentElement.dataset.seg]=sg.dataset.v;render();return}
   const dr=e.target.closest('[data-drill]');if(dr){drill(dr.dataset.drill);return}
@@ -767,7 +831,7 @@ const firebaseConfig={apiKey:"AIzaSyABfymW7NTyjntVK_JqWhEHx9eREiWmkd8",authDomai
   }
   roundsRef.onSnapshot(s=>{clearTimeout(timer);
       if(!s.exists){if(!s.metadata.fromCache)seedIfNew();return}
-      S.rounds=s.data().items||[];S.ready.r=true;derive();render()},
+      if(!s.metadata.fromCache)S.lastSync=Date.now();S.rounds=s.data().items||[];S.ready.r=true;derive();render()},
     err=>{clearTimeout(timer);$('#main').innerHTML='<div class="card empty">Could not load your rounds. '+(err.code==='permission-denied'?'The Firestore rules are blocking reads.':'Reopen the app to try again.')+'</div>'});
   coursesRef.onSnapshot(s=>{S.courses=s.exists?(s.data().items||[]):[];S.ready.c=true;if(S.ready.r&&S.tab==='courses')render()},()=>{});
 })();

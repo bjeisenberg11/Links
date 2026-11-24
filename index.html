@@ -122,6 +122,16 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.ibtn{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:5px;padding:0;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:var(--muted);font:italic 700 11px/1 Georgia,"Times New Roman",serif;cursor:pointer;vertical-align:1px;position:relative}
+.ibtn::before{content:"";position:absolute;inset:-12px}
+.hi-dial span{display:inline-flex;align-items:center}
+.whs{display:flex;flex-direction:column;gap:0}
+.whs div{display:grid;grid-template-columns:20px 1fr;gap:2px 8px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.whs div:first-child{border-top:0}
+.whs i{font-style:normal;font-weight:700;color:var(--accent)}.whs i.no{color:var(--flag)}
+.whs b{font-weight:600}.whs span{grid-column:2;color:var(--muted);font-size:13px}
+.statusbox{background:var(--soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.statusbox div{display:flex;justify-content:space-between;gap:12px}.statusbox span{color:var(--muted)}.statusbox b{text-align:right}
 .setgroup{display:flex;flex-direction:column;gap:10px}
 .setgroup>h4{margin:6px 0 0;font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px}
@@ -216,22 +226,33 @@ function fewTable(d){const n=d.length;if(n<3)return null;const a=k=>d.slice(0,k)
   if(n<=8)return{v:a(2),k:2};if(n<=11)return{v:a(3),k:3};if(n<=14)return{v:a(4),k:4};if(n<=16)return{v:a(5),k:5};
   if(n<=18)return{v:a(6),k:6};if(n===19)return{v:a(7),k:7};return{v:a(8),k:8}}
 function sortRounds(rs){return rs.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:((a.seq||1)-(b.seq||1))||((a.createdAt||0)-(b.createdAt||0)))}
+// World Handicap System (USGA Rules of Handicapping, 2024). Rule numbers in comments.
 function computeAll(rounds){
-  const rs=sortRounds(rounds),out=[],hist=[];let hi=null;
+  const rs=sortRounds(rounds),out=[],hist=[];let hi=null,day=null,dayHI=null;
   for(const r of rs){
+    // 5.4: the index is revised once per day, so every round on a date is judged against the index from the start of that day
+    if(r.date!==day){day=r.date;dayHI=hi}
     const nine=r.holes!=='18',raw=(113/r.slope)*(r.score-r.rating);
-    const diff=nine?(hi==null?null:r1(r1(raw)+expected9(hi))):r1(raw);
-    const rec={...r,raw:r1(raw),diff,adj:0,hiBefore:hi};out.push(rec);
+    // 5.1a: 18-hole differential rounded to the nearest tenth (.5 up; negatives round toward 0)
+    // 5.1b: 9-hole differential stays unrounded until combined with the expected 9-hole differential for the index at time of play
+    const diff=nine?(dayHI==null?null:r1(raw+expected9(dayHI))):r1(raw);
+    const rec={...r,raw:r1(raw),diff,adj:0,hiBefore:dayHI};out.push(rec);
     if(diff==null){rec.hiAfter=hi;continue}
-    if(hi!=null){const g=hi-diff,e=g>=10?2:g>=7?1:0;if(e){rec.esr=e;out.filter(o=>o.diff!=null).slice(-20).forEach(o=>o.adj-=e)}}
+    // 5.9: exceptional score reduction, 7.0-9.9 better than the index at time of play = -1.0, 10.0+ = -2.0, applied to the most recent 20 (cumulative)
+    if(dayHI!=null){const g=r1(dayHI-diff),e=g>=10?2:g>=7?1:0;if(e){rec.esr=e;out.filter(o=>o.diff!=null).slice(-20).forEach(o=>o.adj-=e)}}
     const pool=out.filter(o=>o.diff!=null).slice(-20);
+    // 5.2: best 8 of 20, or the fewer-than-20 table
     const t=fewTable(pool.map(o=>o.diff+o.adj).sort((a,b)=>a-b));
-    if(t){let v=t.v;
+    if(t){let v=t.v;rec.calcHI=r1(v);
+      // 5.7/5.8: low index = lowest index calculated in the 365 days before the day played (needs 20 scores); soft cap 50% above +3.0, hard cap +5.0
       if(pool.length>=20){const cut=new Date(Date.parse(r.date)-365*864e5).toISOString().slice(0,10);
-        const lows=hist.filter(h=>h.date>=cut&&h.date<r.date&&h.n>=20).map(h=>h.hi);
-        if(lows.length){const low=Math.min(...lows);let inc=v-low;if(inc>3){inc=Math.min(3+(inc-3)/2,5);v=low+inc;rec.capped=true}}}
+        const lows=hist.filter(x=>x.date>=cut&&x.date<r.date&&x.n>=20).map(x=>x.hi);
+        if(lows.length){const low=Math.min(...lows);rec.lowHI=low;let inc=v-low;
+          if(inc>3){const capped=Math.min(3+(inc-3)/2,5);rec.capped=capped===5?'hard':'soft';v=low+capped}}}
       hi=Math.min(r1(v),54)}
-    rec.hiAfter=hi;hist.push({date:r.date,hi,n:pool.length});
+    rec.hiAfter=hi;
+    // keep only the end-of-day index as a calculated value
+    if(hist.length&&hist[hist.length-1].date===r.date)hist[hist.length-1]={date:r.date,hi,n:pool.length};else hist.push({date:r.date,hi,n:pool.length});
   }
   return out;
 }
@@ -240,7 +261,7 @@ function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
 /* ---------- version ---------- */
-const VERSION = '1.11';   // bump on every change so Check for update can see it
+const VERSION = '1.12';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const PREF_DEFAULTS={theme:'system',holes:'18',range:'all',refTee:'auto',showInsights:true,library:true};
@@ -364,7 +385,7 @@ function overview(){
   return `
   <section class="card" aria-label="Handicap index">
     <div class="hero">
-      <div class="hi-dial"><div><b class="num">${hiStr(hi)}</b><span>Index</span></div></div>
+      <div class="hi-dial"><div><b class="num">${hiStr(hi)}</b><span>Index<button class="ibtn" type="button" data-info="hi" aria-label="How your index is calculated">i</button></span></div></div>
       <div class="kv">
         <div><small>12-month low</small><strong class="num">${hiStr(low12)}</strong></div>
         <div><small>12 months ago</small><strong class="num">${hiStr(ago)}</strong></div>
@@ -548,7 +569,7 @@ function chStr(ch){return ch==null?'—':ch<0?'+'+(-ch):String(ch)}
 function courseHcp(hi,c,mode){if(hi==null||!c)return{ch:null};
   const nine=c.holes!=='18'||mode!=='18';let rating=+c.rating,par=+(c.par||(c.holes==='18'?72:36)),est=false;
   if(c.holes==='18'&&nine){rating=rating/2;par=par/2;est=true}
-  const raw=(nine?hi/2:hi)*c.slope/113+(rating-par);return{ch:Math.round(raw),raw,nine,est,parSet:!!c.par,rating,par}}
+  const raw=(nine?r1(hi/2):hi)*c.slope/113+(rating-par);return{ch:Math.round(raw),raw,nine,est,parSet:!!c.par,rating,par}}
 function strokeRules(ch,nine){const lbl=nine?'on this nine':'';const si=(a,b)=>a===b?`SI ${a}`:`SI ${a}–${b}`;
   if(ch==null)return[];
   if(ch===0)return[['Strokes','None. You play this course at scratch.'],['Max hole score','Par + 2 on every hole']];
@@ -589,12 +610,13 @@ function openCalc(id){
     const hi=$('#k-hi').value===''?null:+$('#k-hi').value;const r=courseHcp(hi,c,st.mode);
     if(r.ch==null){$('#k-out').innerHTML='<p class="note">Enter a handicap index.</p>';return}
     const rules=strokeRules(r.ch,r.nine);
-    $('#k-out').innerHTML=`<div class="chbig"><b class="num">${chStr(r.ch)}</b><div><strong>Course handicap</strong>${esc(shortCourse(c.course))}, ${esc(c.tee)}${r.nine?` · ${st.mode==='B9'?'back':'front'} 9`:''}<br>Index ${hiStr(hi)} × ${c.slope}/113 + (${fx(r.rating)} − ${r.par})</div></div>
+    $('#k-out').innerHTML=`<div class="chbig"><b class="num">${chStr(r.ch)}</b><div><strong>Course handicap <button class="ibtn" type="button" data-info="ch" aria-label="How course handicap is calculated">i</button></strong>${esc(shortCourse(c.course))}, ${esc(c.tee)}${r.nine?` · ${st.mode==='B9'?'back':'front'} 9`:''}<br>Index ${hiStr(hi)} × ${c.slope}/113 + (${fx(r.rating)} − ${r.par})</div></div>
      <div class="rules">${rules.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
      ${r.est?'<p class="note">This nine is estimated from the 18-hole rating, since nine-hole ratings aren’t saved for this tee.</p>':''}
      ${!r.parSet?`<p class="note">Par isn't saved for this tee, so ${c.holes==='18'?72:36} is assumed. Change it above and it's saved to the course.</p>`:''}`};
   const choose=cid=>{st.c=findCourse(cid);if(st.c&&st.c.holes!=='18'&&st.mode==='18')st.mode='F9';$('#k-search').value='';$('#k-search').blur();pick();recent();out()};
   $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose'){closeSheet();return}
+    if(e.target.closest('[data-info]')){closeSheet();openInfo('ch');return}
     const b=e.target.closest('[data-cid]');if(b){choose(b.dataset.cid);return}
     if(e.target.closest('#k-chg')){st.c=null;pick();recent();out();$('#k-search').focus();return}
     const m=e.target.closest('[data-m]');if(m&&!m.disabled){st.mode=m.dataset.m;out()}});
@@ -604,6 +626,48 @@ function openCalc(id){
     const full=st.mode!=='18'&&c.holes==='18'?v*2:v;if(full===c.par)return;
     const upd={...c,par:full};st.c=upd;out();if(c.lib)return;try{await saveCourses(S.courses.map(x=>x.id===c.id?upd:x));toast('Par saved')}catch(ex){toast(saveErr(ex))}});
   pick();recent();out();
+}
+
+/* ---------- handicap rules info ---------- */
+function openInfo(section){
+  const C=S.calc,scored=C.filter(r=>r.diff!=null),last=scored[scored.length-1],rec=currentRecord(C);
+  const active=rec.pool.filter(o=>o.adj<0),esrRounds=C.filter(r=>r.esr&&rec.pool.includes(r));
+  const hi=last?last.hiAfter:null,low=last&&last.lowHI!=null?last.lowHI:null,room=low!=null&&hi!=null?r1(hi-low):null;
+  const capTxt=!last||rec.pool.length<20?'Not yet (needs 20 scores)':last.capped?`${last.capped==='hard'?'Hard':'Soft'} cap applied: calculated ${fx(last.calcHI)}, capped to ${fx(hi)}`:`Not triggered. You're ${room<=0?'at your low':fx(room)+' above your low'}; caps start at +3.0`;
+  const esrTxt=active.length?`${active.length} of your last 20 carry ${esrRounds.map(r=>`−${fx(r.esr)} from ${fmtD(r.date)}`).join(' and ')}`:'None in your last 20 rounds';
+  const ok=(t,d)=>`<div><i aria-hidden="true">✓</i><b>${t}</b><span>${d}</span></div>`;
+  const no=(t,d)=>`<div><i class="no" aria-hidden="true">!</i><b>${t}</b><span>${d}</span></div>`;
+  $('#sheetHost').innerHTML=`<div class="sheet-bg" id="sbg"><div class="sheet" role="dialog" aria-label="How Links calculates your handicap"><div class="grab" aria-hidden="true"></div>
+   <div class="row-head"><h3>How it's calculated</h3><button class="linkbtn" type="button" id="dclose">Close</button></div>
+   <p class="sub">Links follows the USGA Rules of Handicapping (World Handicap System, 2024 revision). Your current record:</p>
+   <div class="statusbox">
+    <div><span>Handicap index</span><b class="num">${hiStr(hi)}</b></div>
+    <div><span>Scores counting</span><b>Best ${rec.k} of ${rec.pool.length}</b></div>
+    <div><span>Low index, past 365 days</span><b class="num">${hiStr(low)}</b></div>
+    <div><span>Soft / hard cap</span><b>${capTxt}</b></div>
+    <div><span>Exceptional score reduction</span><b>${esrTxt}</b></div></div>
+   <h4 class="libhead" style="background:none;border:0;padding:6px 0 0">Rules applied</h4>
+   <div class="whs">
+    ${ok('Score differential (Rule 5.1)','(113 ÷ slope) × (adjusted gross − course rating), rounded to the nearest tenth.')}
+    ${ok('9-hole scores (Rule 5.1b)','Your 9-hole differential, kept unrounded, plus an expected 9-hole differential for your index at the time you played.')}
+    ${ok('Best 8 of 20 (Rule 5.2)','Average of your lowest 8 of the most recent 20. With fewer than 20, the USGA table applies, including its −2.0 / −1.0 adjustments.')}
+    ${ok('Daily revision (Rule 5.4)','Rounds on the same day are all judged against the index you started that day with.')}
+    ${ok('Low index and caps (Rules 5.7–5.8)','Low index is the lowest calculated in the 365 days before the round. Increases above +3.0 count at 50% (soft cap), and the index can never be more than +5.0 above the low (hard cap).')}
+    ${ok('Exceptional score reduction (Rule 5.9)','A differential 7.0–9.9 better than your index cuts your last 20 by 1.0; 10.0 or better cuts them by 2.0. Reductions stack.')}
+    ${ok('Maximum index (Rule 5.3)','54.0.')}
+    <div id="info-ch"><i aria-hidden="true">✓</i><b>Course handicap (Rule 6.1)</b><span>Index × (slope ÷ 113) + (course rating − par), rounded to a whole number (.5 rounds up). For 9 holes, half the index rounded to a tenth, with the 9-hole rating and par. Net double bogey is par + 2 + strokes received.</span></div>
+   </div>
+   <h4 class="libhead" style="background:none;border:0;padding:6px 0 0">Where it can differ from GHIN</h4>
+   <div class="whs">
+    ${no('Playing conditions (PCC)','GHIN can adjust a day’s differentials by −1.0 to +3.0 using everyone’s scores at that course. Links can’t see those, so it uses 0.')}
+    ${no('9-hole expected score',`The USGA formula is proprietary. Links uses a close published approximation (0.52 × index + 1.2). ${rec.pool.some(r=>r.holes!=='18')?'A 9-hole round is in your current 20, so your index could differ slightly.':'None of your current 20 are 9-hole rounds, so it has no effect right now.'}`)}
+    ${no('Adjusted gross score','You enter it after applying net double bogey. Links doesn’t see hole scores.')}
+    ${no('Committee actions','Penalty scores and handicap committee adjustments aren’t supported.')}
+   </div>
+   <p class="note">When Links was set up in November 2026, it matched your GHIN record exactly: index 11.4, best 11.3.</p></div></div>`;
+  sheetOpened();
+  $('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg'||e.target.id==='dclose')closeSheet()});
+  if(section==='ch')setTimeout(()=>{try{$('#info-ch').scrollIntoView({block:'center'})}catch(e){}},50);
 }
 
 /* ---------- settings ---------- */
@@ -805,6 +869,7 @@ $('#main').addEventListener('click',async e=>{
   if(e.target.closest('#addCourse')){openCourseSheet(null);return}
   if(e.target.closest('#updBtn')){checkUpdate();return}
   if(e.target.closest('#calcBtn')){openCalc(null);return}
+  const inf=e.target.closest('[data-info]');if(inf){openInfo(inf.dataset.info);return}
   const row=e.target.closest('[data-rid]');if(row&&!e.target.closest('button')){S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}
 });
 $('#main').addEventListener('keydown',e=>{const dk=e.target.closest('[data-drill]');if(dk&&(e.key==='Enter'||e.key===' ')){e.preventDefault();drill(dk.dataset.drill);return}const cr=e.target.closest('[data-cedit]');if(cr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openCourseSheet(cr.dataset.cedit);return}const row=e.target.closest('[data-rid]');if(row&&(e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();S.expanded=S.expanded===row.dataset.rid?null:row.dataset.rid;render()}});

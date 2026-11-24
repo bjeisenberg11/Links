@@ -122,6 +122,10 @@ label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute
 .preview{display:flex;gap:16px;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px}
 .preview b{font:700 20px var(--display);display:block}
 .lockscroll,.lockscroll body{overflow:hidden}
+.season{display:flex;flex-direction:column;gap:6px;background:var(--flag-soft);border-radius:10px;padding:10px 12px;font-size:14px}
+.season b{color:var(--flag)}.season>span{color:var(--ink)}
+.chk{flex-direction:row;align-items:center;gap:8px;font:500 14px var(--body);color:var(--ink)}
+.chk input{width:20px;height:20px;padding:0;margin:0;flex:none;accent-color:var(--accent);display:inline-block}
 .ibtn{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:5px;padding:0;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:var(--muted);font:italic 700 11px/1 Georgia,"Times New Roman",serif;cursor:pointer;vertical-align:1px;position:relative}
 .ibtn::before{content:"";position:absolute;inset:-12px}
 .hi-dial span{display:inline-flex;align-items:center}
@@ -238,9 +242,11 @@ function computeAll(rounds){
     const diff=nine?(dayHI==null?null:r1(raw+expected9(dayHI))):r1(raw);
     const rec={...r,raw:r1(raw),diff,adj:0,hiBefore:dayHI};out.push(rec);
     if(diff==null){rec.hiAfter=hi;continue}
+    // off-season rounds (Rule 3.3 / association posting season) stay in history but are not acceptable scores
+    if(r.counting===false){rec.excluded=true;rec.hiAfter=hi;continue}
     // 5.9: exceptional score reduction, 7.0-9.9 better than the index at time of play = -1.0, 10.0+ = -2.0, applied to the most recent 20 (cumulative)
-    if(dayHI!=null){const g=r1(dayHI-diff),e=g>=10?2:g>=7?1:0;if(e){rec.esr=e;out.filter(o=>o.diff!=null).slice(-20).forEach(o=>o.adj-=e)}}
-    const pool=out.filter(o=>o.diff!=null).slice(-20);
+    if(dayHI!=null){const g=r1(dayHI-diff),e=g>=10?2:g>=7?1:0;if(e){rec.esr=e;out.filter(o=>o.diff!=null&&!o.excluded).slice(-20).forEach(o=>o.adj-=e)}}
+    const pool=out.filter(o=>o.diff!=null&&!o.excluded).slice(-20);
     // 5.2: best 8 of 20, or the fewer-than-20 table
     const t=fewTable(pool.map(o=>o.diff+o.adj).sort((a,b)=>a-b));
     if(t){let v=t.v;rec.calcHI=r1(v);
@@ -256,12 +262,24 @@ function computeAll(rounds){
   }
   return out;
 }
-function currentRecord(out){const pool=out.filter(o=>o.diff!=null).slice(-20);
+function currentRecord(out){const pool=out.filter(o=>o.diff!=null&&!o.excluded).slice(-20);
   const ds=pool.map(o=>({o,d:o.diff+o.adj})).sort((a,b)=>a.d-b.d);const t=fewTable(ds.map(x=>x.d));const k=t?t.k:0;
   return{pool,counting:new Set(ds.slice(0,k).map(x=>x.o.id)),k,threshold:k?ds[k-1].d:null}}
 
+/* ---------- posting seasons ---------- */
+// Active posting windows by state (USGA / allied golf associations). States not listed post year-round.
+const SEASONS={AK:['04-01','10-31'],CO:['03-15','11-14'],CT:['04-01','11-14'],DE:['04-01','11-14'],ID:['03-01','11-14'],IL:['03-15','11-14'],IN:['03-01','11-14'],IA:['04-01','11-14'],KS:['03-01','12-31'],KY:['03-01','11-30'],ME:['04-15','10-31'],MD:['03-15','11-30'],MA:['04-01','11-14'],MI:['04-01','10-31'],MN:['04-01','10-31'],MO:['03-01','11-14'],MT:['04-01','10-31'],NE:['03-15','11-14'],NH:['04-01','11-14'],NJ:['04-01','11-14'],NY:['04-01','11-14'],ND:['03-15','11-15'],OH:['03-15','11-30'],OR:['03-01','11-30'],PA:['04-01','11-14'],RI:['04-01','11-14'],SD:['04-01','10-31'],VT:['04-15','10-31'],WA:['03-01','11-14'],WV:['03-01','11-30'],WI:['04-01','10-31'],WY:['04-01','10-31']};
+const STATES='AL Alabama,AK Alaska,AZ Arizona,AR Arkansas,CA California,CO Colorado,CT Connecticut,DE Delaware,DC District of Columbia,FL Florida,GA Georgia,HI Hawaii,ID Idaho,IL Illinois,IN Indiana,IA Iowa,KS Kansas,KY Kentucky,LA Louisiana,ME Maine,MD Maryland,MA Massachusetts,MI Michigan,MN Minnesota,MS Mississippi,MO Missouri,MT Montana,NE Nebraska,NV Nevada,NH New Hampshire,NJ New Jersey,NM New Mexico,NY New York,NC North Carolina,ND North Dakota,OH Ohio,OK Oklahoma,OR Oregon,PA Pennsylvania,RI Rhode Island,SC South Carolina,SD South Dakota,TN Tennessee,TX Texas,UT Utah,VT Vermont,VA Virginia,WA Washington,WV West Virginia,WI Wisconsin,WY Wyoming,GB UK and Ireland,INTL Other country'.split(',').map(s=>[s.slice(0,s.indexOf(' ')),s.slice(s.indexOf(' ')+1)]);
+const stateName=c=>(STATES.find(s=>s[0]===c)||[,c])[1];
+function stateOptions(sel){return `<option value="">Choose state</option>`+STATES.map(([c,n])=>`<option value="${c}" ${sel===c?'selected':''}>${n}</option>`).join('')}
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const mdTxt=md=>MON[+md.slice(0,2)-1]+' '+(+md.slice(3));
+function season(state,date){if(!state)return{known:false,inSeason:true};const w=SEASONS[state];if(!w)return{known:true,inSeason:true,yearRound:true};
+  const md=date.slice(5);return{known:true,inSeason:md>=w[0]&&md<=w[1],window:`${mdTxt(w[0])} – ${mdTxt(w[1])}`}}
+function stateOf(c){return c?(c.state||(c.location?c.location.split(', ').pop():'')):''}
+
 /* ---------- version ---------- */
-const VERSION = '1.12';   // bump on every change so Check for update can see it
+const VERSION = '1.13';   // bump on every change so Check for update can see it
 
 /* ---------- state ---------- */
 const PREF_DEFAULTS={theme:'system',holes:'18',range:'all',refTee:'auto',showInsights:true,library:true};
@@ -354,7 +372,7 @@ function barChart(host,items,opt){ // items [{label,v,tip}]
 /* ---------- Claude insights (insights.json, written by Claude on request) ---------- */
 S.insights=null;
 S.library=[];
-fetch('library.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.tees)S.library=j.tees.map(t=>({...t,lib:true}))}).catch(()=>{});
+fetch('library.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.tees)S.library=j.tees.map(t=>({...t,lib:true,state:t.state||stateOf(t)}))}).catch(()=>{});
 function findCourse(id){return S.courses.find(x=>x.id===id)||S.library.find(x=>x.id===id)||null}
 function libMatches(q,holes){if(!P.library||!q||q.length<2)return[];const saved=new Set(S.courses.map(c=>courseKey(c.course,c.tee,c.holes)));
   return S.library.filter(t=>(!holes||t.holes===holes)&&!saved.has(courseKey(t.course,t.tee,t.holes))&&(t.course.toLowerCase().includes(q)||t.location.toLowerCase().includes(q)||t.region.toLowerCase().includes(q)))}
@@ -381,7 +399,7 @@ function overview(){
   const chg=ago!=null&&hi!=null?r1(hi-ago):null;
   const ytdStart=todayStr().slice(0,4)+'-01-01';
   const rec=currentRecord(C);
-  const ytd=roundsCount(C.filter(x=>x.date>=ytdStart)),m12=roundsCount(C.filter(x=>x.date>=yr)),all=roundsCount(C);
+  const P_=C.filter(x=>!x.excluded);const ytd=roundsCount(P_.filter(x=>x.date>=ytdStart)),m12=roundsCount(P_.filter(x=>x.date>=yr)),all=roundsCount(P_);
   return `
   <section class="card" aria-label="Handicap index">
     <div class="hero">
@@ -485,7 +503,7 @@ function roundsView(){
   let yr='';
   for(const r of rows){const y=r.date.slice(0,4);if(y!==yr){yr=y;html+=`<div class="yearhead">${y}</div>`}
     const open=S.expanded===r.id;
-    html+=`<div class="li" data-rid="${r.id}" role="button" tabindex="0" aria-expanded="${open}"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}${rec.counting.has(r.id)?' · <span class="pill">Counting</span>':''}</div></div>
+    html+=`<div class="li" data-rid="${r.id}" role="button" tabindex="0" aria-expanded="${open}"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}${r.excluded?' · <span class="pill up">Off-season, not counted</span>':''}${rec.counting.has(r.id)?' · <span class="pill">Counting</span>':''}</div></div>
      <div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div>
      ${open?`<div class="expand"><span class="note">Index after: ${hiStr(r.hiAfter)}</span><span style="flex:1"></span><button class="btn ghost" type="button" data-edit="${r.id}">Edit</button><button class="btn danger" type="button" data-del="${r.id}">Delete</button></div>`:''}</div>`}
   return html+`</div></section>`;
@@ -497,7 +515,7 @@ function coursesView(){
   return `<section class="card"><div class="row-head"><label for="cq" style="flex:1">Search courses<input id="cq" type="search" placeholder="Course name" value="${esc(S.cq)}"></label></div>
   <div class="actions"><button class="btn ghost" type="button" id="addCourse">+ Add course</button></div><p class="note">${S.courses.length} saved course and tee combinations. Tap one for its rounds and to edit it. These fill in rating and slope when you post.${S.library.length?` When you post or use the calculator, search also covers the course library: ${new Set(S.library.map(t=>t.course)).size} top Chicagoland and destination courses.`:''}</p></section>
   <section class="card"><div class="list">${cs.map(c=>{const ps=play.get(courseKey(c.course,c.tee,c.holes))||[];
-   return `<div class="li tap" data-drill="course:${encodeURIComponent(c.course)}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
+   return `<div class="li tap" data-drill="course:${encodeURIComponent(c.course)}" role="button" tabindex="0"><div class="t">${esc(c.course)}<div class="m">${c.state?esc(c.state)+' · ':''}${esc(c.tee)} · ${c.holes==='18'?'18 holes':'9 holes'} · ${fx(c.rating)} / ${c.slope}${ps.length?` · avg ${fx(avg(ps.map(p=>p.score)))}`:''}</div></div>
    <div class="r num">${ps.length}<small>played</small></div></div>`}).join('')||'<p class="note">No courses match.</p>'}</div></section>`;
 }
 
@@ -712,7 +730,7 @@ function openSettings(){
 }
 
 /* ---------- drill-down sheets ---------- */
-function roundRows(list){return list.map(r=>`<div class="li tap" data-rid-edit="${r.id}" role="button" tabindex="0"><div class="t">${esc(r.course)}<div class="m">${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}</div></div><div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div></div>`).join('')}
+function roundRows(list){return list.map(r=>`<div class="li tap" data-rid-edit="${r.id}" role="button" tabindex="0"><div class="t">${esc(r.course)}<div class="m">${r.excluded?'<span class="pill up">Not counted</span> ':''}${fmtD(r.date)} · ${esc(r.tee)}${r.holes!=='18'?' · '+holesLabel(r.holes):''} · ${fx(r.rating)}/${r.slope}</div></div><div class="r num">${r.score}<small>diff ${fx(r.diff)}</small></div></div>`).join('')}
 function statBlock(list){const d=list.filter(r=>r.diff!=null),s18=list.filter(r=>r.holes==='18');
   return `<div class="stat4"><div><b class="num">${(n=>n%1?fx(n):n)(roundsCount(list))}</b><small>Rounds</small></div><div><b class="num">${fx(avg(s18.map(r=>r.score)))}</b><small>Avg score</small></div><div><b class="num">${fx(avg(d.map(r=>r.diff)))}</b><small>Avg diff</small></div><div><b class="num">${s18.length?Math.min(...s18.map(r=>r.score)):'—'}</b><small>Best</small></div></div>`}
 function openDrill(title,sub,list,extra=''){
@@ -746,7 +764,7 @@ function drill(key){const [kind,...rest]=key.split(':');const val=rest.join(':')
 /* ---------- post / edit sheet ---------- */
 function openSheet(edit){
   const r=edit?S.rounds.find(x=>x.id===edit):null;
-  const st={course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:P.holes,rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
+  const st={force:r?r.counting!==false:false,course:r?r.course:'',tee:r?r.tee:'',holes:r?r.holes:P.holes,rating:r?r.rating:'',slope:r?r.slope:'',date:r?r.date:todayStr(),score:r?r.score:'',search:'',picked:r?courseKey(r.course,r.tee,r.holes):null};
   const host=$('#sheetHost');
   host.innerHTML=`<div class="sheet-bg" id="sbg"><form class="sheet" id="pform" novalidate>
    <div class="grab" aria-hidden="true"></div>
@@ -757,28 +775,40 @@ function openSheet(edit){
    <label for="f-search">Course<input id="f-search" type="search" placeholder="Search your saved courses" autocomplete="off" value="${esc(st.course)}"></label>
    <div class="picked" id="picked" hidden></div>
    <div class="picker" id="picker" role="listbox" aria-label="Saved courses"></div>
+   <label for="f-state" id="f-state-wrap" hidden>State<select id="f-state">${stateOptions('')}</select></label>
    <label for="f-tee">Tee<input id="f-tee" value="${esc(st.tee)}" placeholder="e.g. Blue"></label>
    <div class="grid2"><label for="f-rating">Rating<input id="f-rating" type="number" inputmode="decimal" step="0.1" value="${st.rating}"></label>
     <label for="f-slope">Slope<input id="f-slope" type="number" inputmode="numeric" value="${st.slope}"></label></div>
    <label for="f-score">Adjusted gross score<input id="f-score" type="number" inputmode="numeric" value="${st.score}" placeholder="e.g. 86"></label>
    <p class="note">Use net double bogey as your max on any hole, same as GHIN. A new course and tee is saved automatically.</p>
+   <div class="season" id="season" hidden></div>
    <div class="preview" id="pv"></div>
    <p class="note" id="ferr" style="color:var(--bad)" hidden></p>
    <div class="actions"><button class="btn ghost" type="button" id="fcancel">Cancel</button><button class="btn" type="submit" id="fsave">${r?'Save changes':'Post round'}</button></div>
   </form></div>`;
   $('#f-holes').value=st.holes;
+  const curCourse=()=>{const k=courseKey($('#f-search').value.trim(),$('#f-tee').value.trim(),$('#f-holes').value);return S.courses.find(c=>courseKey(c.course,c.tee,c.holes)===k)||S.library.find(c=>courseKey(c.course,c.tee,c.holes)===k)||S.courses.find(c=>c.course===$('#f-search').value.trim()&&c.state)};
+  const curState=()=>{const c=curCourse();return stateOf(c)||$('#f-state').value};
+  const counting=()=>{const s=season(curState(),$('#f-date').value||todayStr());return s.inSeason||st.force};
+  const seasonBox=()=>{const c=curCourse(),known=stateOf(c);$('#f-state-wrap').hidden=!!known||!$('#f-search').value.trim();
+    const stt=curState(),s=season(stt,$('#f-date').value||todayStr());const box=$('#season');
+    if(!stt){box.hidden=!$('#f-search').value.trim();box.innerHTML='<span class="note">Pick the course’s state so Links can check the posting season.</span>';return}
+    if(s.inSeason){box.hidden=true;box.innerHTML='';return}
+    box.hidden=false;box.innerHTML=`<b>Off-season in ${esc(stateName(stt))}</b><span>Rounds there post ${s.window}. This round will be saved in your history but won’t count toward your index.</span>
+      <label class="chk" for="f-force"><input type="checkbox" id="f-force" ${st.force?'checked':''}> Count it anyway (course is outside this area or season)</label>`;
+    $('#f-force').addEventListener('change',e=>{st.force=e.target.checked;preview()})};
   const pick=()=>{const q=$('#f-search').value.trim().toLowerCase();const h=$('#f-holes').value==='18'?'18':'9';
     const list=S.courses.filter(c=>c.holes===h&&(!q||c.course.toLowerCase().includes(q)||c.tee.toLowerCase().includes(q)));
     const counts=new Map();S.rounds.forEach(x=>{const k=courseKey(x.course,x.tee,x.holes);counts.set(k,(counts.get(k)||0)+1)});
     list.sort((a,b)=>(counts.get(courseKey(b.course,b.tee,b.holes))||0)-(counts.get(courseKey(a.course,a.tee,a.holes))||0));
     const lib=libMatches(q,h);
     $('#picker').innerHTML=(list.slice(0,40).map(c=>`<button type="button" role="option" data-cid="${c.id}" aria-selected="${st.picked===courseKey(c.course,c.tee,c.holes)}">${esc(c.course)}<br><small>${esc(c.tee)} · ${fx(c.rating)} / ${c.slope}</small></button>`).join('')+libButtons(lib,st.picked))||`<p class="note" style="padding:10px 12px">No match in your courses or the library. Type the course name, then fill in tee, rating and slope.</p>`};
-  const preview=()=>{const sc=+$('#f-score').value,ra=+$('#f-rating').value,sl=+$('#f-slope').value,h=$('#f-holes').value;
+  const preview=()=>{seasonBox();const sc=+$('#f-score').value,ra=+$('#f-rating').value,sl=+$('#f-slope').value,h=$('#f-holes').value;
     if(!sc||!ra||!sl){$('#pv').innerHTML='<span class="note">Enter score, rating and slope to preview the differential.</span>';return}
-    const tmp={id:'__p',date:$('#f-date').value||todayStr(),course:$('#f-search').value,tee:$('#f-tee').value,holes:h,score:sc,rating:ra,slope:sl,seq:9,createdAt:Date.now()};
+    const tmp={id:'__p',date:$('#f-date').value||todayStr(),course:$('#f-search').value,tee:$('#f-tee').value,holes:h,score:sc,rating:ra,slope:sl,seq:9,createdAt:Date.now()};if(!counting())tmp.counting=false;
     const base=S.rounds.filter(x=>x.id!==(r&&r.id));const now=computeAll(base),after=computeAll([...base,tmp]);
     const me=after.find(x=>x.id==='__p');const hiNow=[...now].reverse().find(x=>x.hiAfter!=null),hiAfter=[...after].reverse().find(x=>x.hiAfter!=null);
-    $('#pv').innerHTML=`<div><span>Differential</span><b class="num">${fx(me.diff)}</b></div><div><span>Index now</span><b class="num">${hiStr(hiNow&&hiNow.hiAfter)}</b></div><div><span>Index after</span><b class="num">${hiStr(hiAfter&&hiAfter.hiAfter)}</b></div>`};
+    $('#pv').innerHTML=`<div><span>Differential</span><b class="num">${fx(me.diff)}</b></div><div><span>Index now</span><b class="num">${hiStr(hiNow&&hiNow.hiAfter)}</b></div><div><span>Index after</span><b class="num">${hiStr(hiAfter&&hiAfter.hiAfter)}</b></div>${me.excluded?'<div><span>Counts</span><b>No</b></div>':''}`};
   const showPicked=()=>{const on=!!st.picked;$('#picker').hidden=on;$('#picked').hidden=!on;
     if(on)$('#picked').innerHTML=`<div>${esc($('#f-search').value)}<small>${esc($('#f-tee').value)} · ${fx(+$('#f-rating').value)} / ${$('#f-slope').value}</small></div><button type="button" class="linkbtn" id="chgCourse">Change</button>`};
   const recent=()=>{const seen=new Set(),out=[];const h9=$('#f-holes').value==='18'?'18':'9';
@@ -794,7 +824,8 @@ function openSheet(edit){
   $('#f-search').addEventListener('input',()=>{st.picked=null;showPicked();pick();recent()});
   $('#f-search').addEventListener('focus',()=>{if(st.picked){st.picked=null;showPicked();pick();recent()}});
   $('#f-holes').addEventListener('change',()=>{st.picked=null;showPicked();pick();recent();preview()});
-  ['f-score','f-rating','f-slope','f-date'].forEach(id=>$('#'+id).addEventListener('input',preview));
+  ['f-score','f-rating','f-slope','f-date','f-tee'].forEach(id=>$('#'+id).addEventListener('input',preview));
+  $('#f-state').addEventListener('change',preview);$('#f-search').addEventListener('input',preview);
   $('#picker').addEventListener('click',e=>{const b=e.target.closest('[data-cid]');if(b)choose(b.dataset.cid)});
   const close=closeSheet;sheetOpened();
   $('#fcancel').onclick=close;$('#sbg').addEventListener('click',e=>{if(e.target.id==='sbg')close()});
@@ -805,12 +836,13 @@ function openSheet(edit){
     $('#fsave').disabled=true;
     try{
       const sameDay=S.rounds.filter(x=>x.date===v.date&&(!r||x.id!==r.id)).length;
-      const rec=r?{...r,...v}:{id:'r'+Date.now().toString(36),...v,seq:sameDay+1,createdAt:Date.now()};
+      const rec=r?{...r,...v}:{id:'r'+Date.now().toString(36),...v,seq:sameDay+1,createdAt:Date.now()};if(counting())delete rec.counting;else rec.counting=false;const stt=curState();
       const rounds=r?S.rounds.map(x=>x.id===r.id?rec:x):[...S.rounds,rec];
       const k=courseKey(v.course,v.tee,v.holes);let courses=S.courses;
-      if(!courses.some(c=>courseKey(c.course,c.tee,c.holes)===k)){const lb=S.library.find(t=>courseKey(t.course,t.tee,t.holes)===k);const nc={id:'c'+Date.now().toString(36),course:v.course,tee:v.tee,holes:v.holes==='18'?'18':'9',rating:v.rating,slope:v.slope};if(lb&&lb.par)nc.par=v.holes==='18'?lb.par:lb.par/2;courses=[...courses,nc]}
+      if(!courses.some(c=>courseKey(c.course,c.tee,c.holes)===k)){const lb=S.library.find(t=>courseKey(t.course,t.tee,t.holes)===k);const nc={id:'c'+Date.now().toString(36),course:v.course,tee:v.tee,holes:v.holes==='18'?'18':'9',rating:v.rating,slope:v.slope};if(stt)nc.state=stt;if(lb&&lb.par)nc.par=v.holes==='18'?lb.par:lb.par/2;courses=[...courses,nc]}
+      else if(stt){const ex=courses.find(c=>courseKey(c.course,c.tee,c.holes)===k);if(ex&&!ex.state)courses=courses.map(c=>c===ex?{...c,state:stt}:c)}
       await saveRounds(rounds);if(courses!==S.courses)await saveCourses(courses);
-      close();toast(r?'Round updated':'Round posted');
+      close();toast(rec.counting===false?'Saved. Off-season, so it won\u2019t count':r?'Round updated':'Round posted');
     }catch(ex){$('#ferr').textContent=saveErr(ex);$('#ferr').hidden=false;$('#fsave').disabled=false}
   });
 }
@@ -820,6 +852,7 @@ function openCourseSheet(id){
    <label for="c-name">Course<input id="c-name" value="${esc(c?c.course:'')}"></label>
    <div class="grid2"><label for="c-tee">Tee<input id="c-tee" value="${esc(c?c.tee:'')}"></label><label for="c-holes">Holes<select id="c-holes"><option value="18">18</option><option value="9">9</option></select></label></div>
    <div class="grid2"><label for="c-rating">Rating<input id="c-rating" type="number" step="0.1" inputmode="decimal" value="${c?c.rating:''}"></label><label for="c-slope">Slope<input id="c-slope" type="number" inputmode="numeric" value="${c?c.slope:''}"></label></div>
+   <label for="c-state">State<select id="c-state">${stateOptions(c?c.state||'':'')}</select></label>
    <label for="c-par">Par<input id="c-par" type="number" inputmode="numeric" value="${c&&c.par?c.par:''}" placeholder="${c&&c.holes==='9'?'36':'72'}"></label>
    <p class="note">Changing rating or slope here affects future posts only. Rounds already posted keep their own numbers.</p>
    <p class="note" id="cerr" style="color:var(--bad)" hidden></p>
@@ -829,7 +862,7 @@ function openCourseSheet(id){
   if(c)$('#cdel').onclick=async()=>{const b=$('#cdel');if(b.dataset.arm!=='1'){b.dataset.arm='1';b.textContent='Tap again to remove';return}
     try{await saveCourses(S.courses.filter(x=>x.id!==c.id));close();toast('Course removed')}catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}};
   $('#cform').addEventListener('submit',async e=>{e.preventDefault();
-    const v={course:$('#c-name').value.trim(),tee:$('#c-tee').value.trim(),holes:$('#c-holes').value,rating:+$('#c-rating').value,slope:+$('#c-slope').value};if(+$('#c-par').value)v.par=+$('#c-par').value;
+    const v={course:$('#c-name').value.trim(),tee:$('#c-tee').value.trim(),holes:$('#c-holes').value,rating:+$('#c-rating').value,slope:+$('#c-slope').value};if(+$('#c-par').value)v.par=+$('#c-par').value;if($('#c-state').value)v.state=$('#c-state').value;
     if(!v.course||!v.tee||!v.rating||!v.slope){$('#cerr').textContent='Fill in course, tee, rating and slope.';$('#cerr').hidden=false;return}
     try{await saveCourses(c?S.courses.map(x=>x.id===c.id?{...c,...v}:x):[...S.courses,{id:'c'+Date.now().toString(36),...v}]);close();toast('Course saved')}
     catch(ex){$('#cerr').textContent=saveErr(ex);$('#cerr').hidden=false}});
